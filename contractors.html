@@ -288,6 +288,100 @@
                 </div>
             </div>
         </section>
+
+        <section class="payment-modal ai-modal is-hidden" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+            <div class="ai-modal-backdrop" id="paymentBackdrop"></div>
+            <div class="container ai-modal-dialog payment-dialog">
+                <button type="button" class="ai-modal-close" id="paymentClose" aria-label="Schliessen"><i class="fas fa-xmark"></i></button>
+
+                <div class="payment-shell">
+                    <div class="payment-header">
+                        <p class="card-topline">Zahlung in Nailit</p>
+                        <h2 id="paymentTitle">Zahlungsart auswaehlen</h2>
+                        <p>Waehle aus, wie du das Angebot im Direktchat begleichen moechtest.</p>
+                    </div>
+
+                    <div class="payment-summary">
+                        <div>
+                            <span class="payment-summary-label">Betrieb</span>
+                            <strong id="paymentBusiness">-</strong>
+                        </div>
+                        <div>
+                            <span class="payment-summary-label">Betrag</span>
+                            <strong id="paymentAmount">-</strong>
+                        </div>
+                    </div>
+
+                    <form class="payment-form" id="paymentForm">
+                        <div class="payment-methods-grid">
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="stripe" checked>
+                                <span class="payment-option-box">
+                                    <i class="fas fa-credit-card"></i>
+                                    <strong>Stripe Checkout</strong>
+                                    <small>Karte sicher ueber Stripe bezahlen</small>
+                                </span>
+                            </label>
+
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="paypal">
+                                <span class="payment-option-box">
+                                    <i class="fab fa-paypal"></i>
+                                    <strong>PayPal</strong>
+                                    <small>Schnell mit Konto bezahlen</small>
+                                </span>
+                            </label>
+
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="applepay">
+                                <span class="payment-option-box">
+                                    <i class="fab fa-apple-pay"></i>
+                                    <strong>Apple Pay</strong>
+                                    <small>Direkt auf diesem Geraet</small>
+                                </span>
+                            </label>
+
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="invoice">
+                                <span class="payment-option-box">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <strong>Rechnung</strong>
+                                    <small>PDF-Rechnung direkt im Chat erhalten</small>
+                                </span>
+                            </label>
+
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="transfer">
+                                <span class="payment-option-box">
+                                    <i class="fas fa-building-columns"></i>
+                                    <strong>Ueberweisung</strong>
+                                    <small>Bankdaten und Referenz direkt anzeigen</small>
+                                </span>
+                            </label>
+
+                            <label class="payment-option">
+                                <input type="radio" name="paymentMethod" value="klarna">
+                                <span class="payment-option-box">
+                                    <i class="fas fa-wallet"></i>
+                                    <strong>Klarna</strong>
+                                    <small>Heute sichern, spaeter zahlen</small>
+                                </span>
+                            </label>
+                        </div>
+
+                        <div class="payment-provider-hint" id="paymentProviderHint"></div>
+                        <div class="payment-transfer-details is-hidden" id="paymentTransferDetails"></div>
+                        <p class="payment-note">Demo-Hinweis: Die Auswahl wird lokal gespeichert und markiert das Angebot im Chat als bezahlt.</p>
+                        <div class="inline-error payment-status-line" id="paymentStatus"></div>
+
+                        <div class="payment-actions">
+                            <button type="button" class="btn btn-secondary" id="paymentCancel">Abbrechen</button>
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-lock"></i> Zahlung bestaetigen</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
     </div>
     <script src="script.js"></script>
 </body>

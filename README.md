@@ -32,6 +32,19 @@ Then set your real OpenAI API key in `.env`:
 OPENAI_API_KEY=...
 ```
 
+Optional payment configuration for live Stripe and PayPal redirects:
+
+```bash
+APP_BASE_URL=http://localhost:3000
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PAYMENT_LINK=https://buy.stripe.com/... # optional fallback
+PAYPAL_CHECKOUT_URL=https://www.paypal.com/checkoutnow?token=...
+BANK_TRANSFER_HOLDER=Nailit Services GmbH
+BANK_TRANSFER_IBAN=DE12500105170648489890
+BANK_TRANSFER_BIC=INGDDEFFXXX
+BANK_TRANSFER_BANK=Nailit Partnerbank
+```
+
 Start the app with:
 
 ```bash
@@ -43,6 +56,10 @@ Then open `http://localhost:3000` in a browser.
 ## Fallback mode without API key
 
 If the server runs without `OPENAI_API_KEY`, the frontend still works, but the issue analysis falls back to the local rule-based classifier instead of ChatGPT.
+
+If `STRIPE_SECRET_KEY` is present, Nailit creates real Stripe Checkout Sessions on the server. If it is missing, Stripe falls back to demo mode or the optional `STRIPE_PAYMENT_LINK`. Invoice PDF download and bank transfer details still work locally in the browser.
+
+The direct-chat offer flow also supports local status tracking for partial payments, full settlement, and cancellations.
 
 ## Good next steps for building on it
 

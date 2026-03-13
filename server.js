@@ -7,6 +7,8 @@ const OpenAI = require('openai');
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const model = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+const appBaseUrl = process.env.APP_BASE_URL || '';
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY || '';
 
 const businesses = [
     {
@@ -150,8 +152,101 @@ const client = process.env.OPENAI_API_KEY
     ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
     : null;
 
+const paymentConfig = {
+    stripeCheckoutUrl: process.env.STRIPE_PAYMENT_LINK || '',
+    paypalCheckoutUrl: process.env.PAYPAL_CHECKOUT_URL || '',
+    stripeEnabled: Boolean(stripeSecretKey),
+    paypalEnabled: Boolean(process.env.PAYPAL_CHECKOUT_URL),
+    bankTransfer: {
+        holder: process.env.BANK_TRANSFER_HOLDER || 'Nailit Services GmbH',
+        iban: process.env.BANK_TRANSFER_IBAN || 'DE12500105170648489890',
+        bic: process.env.BANK_TRANSFER_BIC || 'INGDDEFFXXX',
+        bank: process.env.BANK_TRANSFER_BANK || 'Nailit Partnerbank'
+    }
+};
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
+
+app.get('/api/payments/config', (req, res) => {
+    res.json(paymentConfig);
+});
+
+const getAppUrl = (req) => {
+    return appBaseUrl || `${req.protocol}://${req.get('host')}`;
+};
+
+const createStripeCheckoutSession = async ({ amount, title, offerId, businessName, appUrl }) => {
+    const unitAmount = Math.max(1, Math.round(Number(amount || 0) * 100));
+    const encodedTitle = String(title || 'Nailit Auftrag').trim() || 'Nailit Auftrag';
+    const encodedBusinessName = String(businessName || 'Nailit Partner').trim() || 'Nailit Partner';
+    const successUrl = `${appUrl}/contractors.html?checkout=success&offer=${encodeURIComponent(offerId)}`;
+    const cancelUrl = `${appUrl}/contractors.html?checkout=cancel&offer=${encodeURIComponent(offerId)}`;
+    const formData = new URLSearchParams();
+
+    formData.set('mode', 'payment');
+    formData.set('success_url', successUrl);
+    formData.set('cancel_url', cancelUrl);
+    formData.set('line_items[0][quantity]', '1');
+    formData.set('line_items[0][price_data][currency]', 'eur');
+    formData.set('line_items[0][price_data][unit_amount]', String(unitAmount));
+    formData.set('line_items[0][price_data][product_data][name]', encodedTitle);
+    formData.set('line_items[0][price_data][product_data][description]', `Direktchat-Angebot von ${encodedBusinessName}`);
+    formData.set('metadata[offerId]', String(offerId || 'unknown-offer'));
+    formData.set('metadata[businessName]', encodedBusinessName);
+
+    const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+        method: 'POST',
+        headers: {
+            Authorization: `Bearer ${stripeSecretKey}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
+    });
+
+    const payload = await response.json();
+
+    if (!response.ok) {
+        const errorMessage = payload?.error?.message || 'Stripe Checkout Session konnte nicht erstellt werden.';
+        throw new Error(errorMessage);
+    }
+
+    return payload;
+};
+
+app.post('/api/payments/stripe/checkout-session', async (req, res) => {
+    const { amount, title, offerId, businessName } = req.body || {};
+
+    if (!stripeSecretKey) {
+        return res.status(503).json({
+            error: 'STRIPE_SECRET_KEY fehlt. Lege ihn in der .env an, um echte Stripe-Checkout-Sessions zu aktivieren.'
+        });
+    }
+
+    if (!amount || !title || !offerId) {
+        return res.status(400).json({ error: 'amount, title und offerId sind fuer Stripe Checkout erforderlich.' });
+    }
+
+    try {
+        const session = await createStripeCheckoutSession({
+            amount,
+            title,
+            offerId,
+            businessName,
+            appUrl: getAppUrl(req)
+        });
+
+        return res.json({
+            id: session.id,
+            url: session.url
+        });
+    } catch (error) {
+        console.error('Stripe checkout session failed:', error);
+        return res.status(502).json({
+            error: error.message || 'Stripe Checkout Session konnte nicht gestartet werden.'
+        });
+    }
+});
 
 const rankBusinesses = (trade, priority) => {
     const pool = businesses.filter((business) => business.trade === trade);

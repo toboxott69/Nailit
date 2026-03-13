@@ -42,6 +42,16 @@ const contractorChatMessages = document.getElementById('contractorChatMessages')
 const contractorChatForm = document.getElementById('contractorChatForm');
 const contractorChatInput = document.getElementById('contractorChatInput');
 const contractorChatStatus = document.getElementById('contractorChatStatus');
+const paymentModal = document.getElementById('paymentModal');
+const paymentBackdrop = document.getElementById('paymentBackdrop');
+const paymentClose = document.getElementById('paymentClose');
+const paymentForm = document.getElementById('paymentForm');
+const paymentBusiness = document.getElementById('paymentBusiness');
+const paymentAmount = document.getElementById('paymentAmount');
+const paymentStatus = document.getElementById('paymentStatus');
+const paymentCancel = document.getElementById('paymentCancel');
+const paymentProviderHint = document.getElementById('paymentProviderHint');
+const paymentTransferDetails = document.getElementById('paymentTransferDetails');
 const directoryBackLink = document.getElementById('directoryBackLink');
 const navUserStatus = document.getElementById('navUserStatus');
 const navUserName = document.getElementById('navUserName');
@@ -87,6 +97,31 @@ const STORAGE_KEYS = {
 };
 
 let activeChatBusiness = null;
+let activePaymentOfferId = null;
+let paymentConfig = {
+    stripeCheckoutUrl: '',
+    paypalCheckoutUrl: '',
+    stripeEnabled: false,
+    paypalEnabled: false,
+    bankTransfer: {
+        holder: 'Nailit Services GmbH',
+        iban: 'DE12500105170648489890',
+        bic: 'INGDDEFFXXX',
+        bank: 'Nailit Partnerbank'
+    }
+};
+
+const PAYMENT_METHODS = {
+    stripe: 'Stripe Checkout',
+    paypal: 'PayPal',
+    applepay: 'Apple Pay',
+    invoice: 'Rechnung',
+    transfer: 'Bankueberweisung',
+    klarna: 'Klarna'
+};
+
+const IMMEDIATE_PAYMENT_METHODS = new Set(['stripe', 'paypal', 'applepay', 'klarna']);
+const TRACKED_SETTLEMENT_METHODS = new Set(['invoice', 'transfer']);
 
 const businesses = {
     sanitaer: [
@@ -267,7 +302,7 @@ const setMenuState = (isOpen) => {
 };
 
 const syncModalBodyState = () => {
-    const anyModalOpen = [aiDiagnoseModal, accountsSection, contractorChatModal].some((modal) => modal && !modal.classList.contains('is-hidden'));
+    const anyModalOpen = [aiDiagnoseModal, accountsSection, contractorChatModal, paymentModal].some((modal) => modal && !modal.classList.contains('is-hidden'));
     body.classList.toggle('modal-open', anyModalOpen);
 };
 
@@ -301,6 +336,457 @@ const closeAuthModal = () => {
     syncModalBodyState();
 };
 
+const getPaymentMethodLabel = (paymentMethod) => PAYMENT_METHODS[paymentMethod] || 'Zahlung';
+
+const formatLongDate = (value) => {
+    return new Intl.DateTimeFormat('de-DE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    }).format(new Date(value));
+};
+
+const getPaidAmount = (message) => {
+    return Math.max(0, Number(message?.amountPaid || 0));
+};
+
+const getOutstandingAmount = (message) => {
+    return Math.max(0, Number(message?.amount || 0) - getPaidAmount(message));
+};
+
+const getNextPartialAmount = (message) => {
+    const outstandingAmount = getOutstandingAmount(message);
+
+    if (outstandingAmount <= 0) {
+        return 0;
+    }
+
+    if (!getPaidAmount(message)) {
+        return Math.min(outstandingAmount, Math.max(1, Math.round(Number(message.amount || 0) / 2)));
+    }
+
+    return outstandingAmount;
+};
+
+const getOfferStatusLabel = (message) => {
+    if (message.status === 'cancelled') {
+        return 'Storniert';
+    }
+
+    if (message.status === 'paid') {
+        return 'Bezahlt';
+    }
+
+    if (message.status === 'partial') {
+        return 'Teilzahlung';
+    }
+
+    if (message.status === 'pending' && message.paymentMethod === 'invoice') {
+        return 'Rechnung gesendet';
+    }
+
+    if (message.status === 'pending' && message.paymentMethod === 'transfer') {
+        return 'Wartet auf Ueberweisung';
+    }
+
+    return 'Offen';
+};
+
+const getOfferStatusNote = (message) => {
+    if (message.status === 'cancelled') {
+        return message.cancelledAt
+            ? `Angebot am ${formatLongDate(message.cancelledAt)} storniert.${getPaidAmount(message) ? ` Bereits bezahlt: ${formatCurrency(getPaidAmount(message))}.` : ''}`
+            : 'Angebot wurde storniert.';
+    }
+
+    if (message.paymentMethod === 'invoice' && message.invoiceNumber) {
+        return `Rechnung ${message.invoiceNumber} wurde erstellt. Faellig bis ${formatLongDate(message.invoiceDueAt)}.`;
+    }
+
+    if (message.paymentMethod === 'transfer') {
+        return `Bitte ueberweise ${formatCurrency(getOutstandingAmount(message) || message.amount)} unter Angabe der Referenz ${message.invoiceNumber}. Die Bankdaten stehen im PDF und direkt hier im Chat.`;
+    }
+
+    if (message.status === 'partial') {
+        return `${formatCurrency(getPaidAmount(message))} von ${formatCurrency(message.amount)} wurden bereits bezahlt. Restbetrag: ${formatCurrency(getOutstandingAmount(message))}.`;
+    }
+
+    if (message.status === 'paid' && message.providerRedirected) {
+        return 'Ein externer Checkout wurde geoeffnet und die Zahlung im Demo-Chat bestaetigt.';
+    }
+
+    return '';
+};
+
+const toPdfText = (value) => {
+    return String(value || '')
+        .normalize('NFKD')
+        .replace(/[^\x20-\x7E]/g, '')
+        .replace(/\\/g, '\\\\')
+        .replace(/\(/g, '\\(')
+        .replace(/\)/g, '\\)');
+};
+
+const createPdfBlob = (lines) => {
+    const content = ['BT', '/F1 12 Tf', '50 790 Td', '16 TL'];
+
+    lines.forEach((line, index) => {
+        if (index > 0) {
+            content.push('T*');
+        }
+
+        content.push(`(${toPdfText(line)}) Tj`);
+    });
+
+    content.push('ET');
+    const stream = `${content.join('\n')}\n`;
+    const objects = [
+        '1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj',
+        '2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj',
+        '3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj',
+        `4 0 obj << /Length ${stream.length} >> stream\n${stream}endstream endobj`,
+        '5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj'
+    ];
+
+    let pdf = '%PDF-1.4\n';
+    const offsets = [0];
+
+    objects.forEach((object) => {
+        offsets.push(pdf.length);
+        pdf += `${object}\n`;
+    });
+
+    const xrefStart = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n`;
+    pdf += '0000000000 65535 f \n';
+
+    offsets.slice(1).forEach((offset) => {
+        pdf += `${String(offset).padStart(10, '0')} 00000 n \n`;
+    });
+
+    pdf += `trailer << /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefStart}\n%%EOF`;
+    return new Blob([pdf], { type: 'application/pdf' });
+};
+
+const downloadBlob = (blob, fileName) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+const createInvoiceData = ({ business, offer, paymentMethod }) => {
+    const session = getSession();
+    const now = new Date();
+    const dueDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const invoiceNumber = `NIT-${now.toISOString().slice(0, 10).replace(/-/g, '')}-${String(now.getTime()).slice(-4)}`;
+
+    return {
+        invoiceNumber,
+        invoiceCreatedAt: now.toISOString(),
+        invoiceDueAt: dueDate.toISOString(),
+        customerName: session?.name || 'Gastkunde',
+        customerEmail: session?.email || 'gast@nailit.local',
+        businessName: business.name,
+        businessCity: business.city,
+        paymentMethod,
+        transferHolder: paymentConfig.bankTransfer.holder,
+        transferIban: paymentConfig.bankTransfer.iban,
+        transferBic: paymentConfig.bankTransfer.bic,
+        transferBank: paymentConfig.bankTransfer.bank,
+        offerTitle: offer.title,
+        offerAmount: offer.amount
+    };
+};
+
+const downloadOfferInvoice = (message) => {
+    const invoiceLines = [
+        'Nailit - Rechnungsbestaetigung',
+        '',
+        `Rechnungsnummer: ${message.invoiceNumber || 'offen'}`,
+        `Datum: ${formatLongDate(message.invoiceCreatedAt || message.timestamp)}`,
+        `Faellig am: ${formatLongDate(message.invoiceDueAt || message.timestamp)}`,
+        '',
+        `Kunde: ${message.customerName || 'Gastkunde'}`,
+        `E-Mail: ${message.customerEmail || 'gast@nailit.local'}`,
+        `Betrieb: ${message.businessName || activeChatBusiness?.name || 'Handwerksbetrieb'}`,
+        `Ort: ${message.businessCity || activeChatBusiness?.city || 'Deutschland'}`,
+        '',
+        `Leistung: ${message.title}`,
+        `Beschreibung: ${message.description}`,
+        `Betrag: ${formatCurrency(message.amount)}`,
+        `Bereits bezahlt: ${formatCurrency(getPaidAmount(message))}`,
+        `Restbetrag: ${formatCurrency(getOutstandingAmount(message))}`,
+        `Zahlungsart: ${getPaymentMethodLabel(message.paymentMethod)}`,
+        `Status: ${getOfferStatusLabel(message)}`,
+        ''
+    ];
+
+    if (message.paymentMethod === 'transfer') {
+        invoiceLines.push(`Kontoinhaber: ${message.transferHolder || paymentConfig.bankTransfer.holder}`);
+        invoiceLines.push(`IBAN: ${message.transferIban || paymentConfig.bankTransfer.iban}`);
+        invoiceLines.push(`BIC: ${message.transferBic || paymentConfig.bankTransfer.bic}`);
+        invoiceLines.push(`Bank: ${message.transferBank || paymentConfig.bankTransfer.bank}`);
+        invoiceLines.push(`Verwendungszweck: ${message.invoiceNumber}`);
+        invoiceLines.push('');
+    }
+
+    invoiceLines.push('Vielen Dank fuer die Nutzung von Nailit.');
+
+    downloadBlob(createPdfBlob(invoiceLines), `${message.invoiceNumber || 'nailit-rechnung'}.pdf`);
+};
+
+const getProviderCheckoutUrl = (paymentMethod) => {
+    if (paymentMethod === 'stripe') {
+        return paymentConfig.stripeCheckoutUrl;
+    }
+
+    if (paymentMethod === 'paypal') {
+        return paymentConfig.paypalCheckoutUrl;
+    }
+
+    return '';
+};
+
+const createStripeCheckoutSession = async ({ offer, business }) => {
+    const response = await fetch('/api/payments/stripe/checkout-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            amount: offer.amount,
+            title: offer.title,
+            offerId: offer.offerId,
+            businessName: business.name
+        })
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(payload.error || 'Stripe Checkout konnte nicht gestartet werden.');
+    }
+
+    return payload;
+};
+
+const getProviderHintText = (selectedMethod) => {
+    if (selectedMethod === 'stripe') {
+        if (paymentConfig.stripeEnabled) {
+            return 'Stripe ist live konfiguriert. Beim Bestaetigen wird eine echte Checkout Session auf dem Server erstellt.';
+        }
+
+        return paymentConfig.stripeCheckoutUrl
+            ? 'Stripe verwendet aktuell einen statischen Fallback-Link. Mit STRIPE_SECRET_KEY wird stattdessen automatisch eine echte Checkout Session erzeugt.'
+            : 'Stripe ist vorbereitet. Fuer echte Checkout Sessions muss nur noch STRIPE_SECRET_KEY in der .env gesetzt werden.';
+    }
+
+    if (selectedMethod === 'paypal') {
+        return paymentConfig.paypalEnabled
+            ? 'PayPal ist live konfiguriert und wird beim Bestaetigen in einem neuen Tab geoeffnet.'
+            : 'PayPal ist vorbereitet. Fuer den Live-Checkout muss nur noch PAYPAL_CHECKOUT_URL in der .env hinterlegt werden.';
+    }
+
+    if (selectedMethod === 'invoice') {
+        return 'Nach der Auswahl wird die Rechnung direkt im Chat abgelegt und kann als PDF heruntergeladen werden.';
+    }
+
+    if (selectedMethod === 'transfer') {
+        return 'Die Ueberweisung erzeugt eine Referenz und zeigt die Bankdaten direkt in Nailit an.';
+    }
+
+    return `${getPaymentMethodLabel(selectedMethod)} wird direkt im Chat als Zahlungsart gespeichert.`;
+};
+
+const getOfferStateClass = (message) => {
+    if (message.status === 'partial') {
+        return 'partial';
+    }
+
+    if (message.status === 'cancelled') {
+        return 'cancelled';
+    }
+
+    return message.status;
+};
+
+const renderOfferActions = (message) => {
+    const actions = [];
+    const outstandingAmount = getOutstandingAmount(message);
+    const canTrackSettlement = TRACKED_SETTLEMENT_METHODS.has(message.paymentMethod) && !['paid', 'cancelled'].includes(message.status);
+
+    if (message.status === 'open') {
+        actions.push(`<button type="button" class="btn btn-primary chat-offer-pay-btn" data-offer-id="${escapeHtml(message.offerId)}"><i class="fas fa-credit-card"></i> Zahlungsart waehlen</button>`);
+    } else {
+        const settledLabel = message.status === 'pending'
+            ? (message.paymentMethod === 'invoice' ? 'Rechnung im Chat bereitgestellt' : 'Ueberweisung wartet auf Zahlungseingang')
+            : message.status === 'partial'
+                ? `Teilzahlung erfasst: ${formatCurrency(getPaidAmount(message))}`
+                : message.status === 'cancelled'
+                    ? 'Angebot storniert'
+                    : `Zahlung per ${getPaymentMethodLabel(message.paymentMethod)} bestaetigt`;
+        const iconClass = message.status === 'cancelled'
+            ? 'fa-ban'
+            : message.status === 'partial' || message.status === 'pending'
+                ? 'fa-hourglass-half'
+                : 'fa-circle-check';
+
+        actions.push(`<div class="chat-offer-paid${message.status === 'pending' || message.status === 'partial' ? ' is-pending' : ''}${message.status === 'cancelled' ? ' is-cancelled' : ''}"><i class="fas ${iconClass}"></i> ${escapeHtml(settledLabel)}</div>`);
+    }
+
+    if (canTrackSettlement && outstandingAmount > 0) {
+        const partialAmount = getNextPartialAmount(message);
+
+        if (partialAmount > 0 && partialAmount < outstandingAmount) {
+            actions.push(`<button type="button" class="btn btn-secondary" data-offer-partial="${escapeHtml(message.offerId)}"><i class="fas fa-coins"></i> Anzahlung ${escapeHtml(formatCurrency(partialAmount))}</button>`);
+        }
+
+        actions.push(`<button type="button" class="btn btn-secondary" data-offer-complete="${escapeHtml(message.offerId)}"><i class="fas fa-check-double"></i> Rest als bezahlt</button>`);
+    }
+
+    if (!['paid', 'cancelled'].includes(message.status)) {
+        actions.push(`<button type="button" class="btn btn-secondary chat-offer-action-danger" data-offer-cancel="${escapeHtml(message.offerId)}"><i class="fas fa-ban"></i> Stornieren</button>`);
+    }
+
+    if (message.invoiceNumber) {
+        actions.push(`<button type="button" class="btn btn-secondary" data-download-invoice="${escapeHtml(message.offerId)}"><i class="fas fa-file-pdf"></i> PDF-Rechnung</button>`);
+    }
+
+    if (message.paymentMethod === 'transfer') {
+        actions.push(`<button type="button" class="btn btn-secondary" data-copy-transfer="${escapeHtml(message.offerId)}"><i class="fas fa-copy"></i> IBAN kopieren</button>`);
+    }
+
+    return actions.join('');
+};
+
+const updatePaymentMethodDetails = () => {
+    if (!paymentForm) {
+        return;
+    }
+
+    const selectedMethod = String(new FormData(paymentForm).get('paymentMethod') || 'stripe');
+    const providerUrl = getProviderCheckoutUrl(selectedMethod);
+
+    if (paymentProviderHint) {
+        paymentProviderHint.textContent = providerUrl && selectedMethod === 'paypal'
+            ? `${getProviderHintText(selectedMethod)} Ein externer Checkout-Link ist bereits hinterlegt.`
+            : getProviderHintText(selectedMethod);
+    }
+
+    if (paymentTransferDetails) {
+        if (selectedMethod === 'transfer') {
+            paymentTransferDetails.classList.remove('is-hidden');
+            paymentTransferDetails.innerHTML = `
+                <strong>Bankdaten fuer die Ueberweisung</strong>
+                <div class="payment-transfer-grid">
+                    <div>
+                        <span>Kontoinhaber</span>
+                        <strong>${escapeHtml(paymentConfig.bankTransfer.holder)}</strong>
+                    </div>
+                    <div>
+                        <span>Bank</span>
+                        <strong>${escapeHtml(paymentConfig.bankTransfer.bank)}</strong>
+                    </div>
+                    <div>
+                        <span>IBAN</span>
+                        <strong>${escapeHtml(paymentConfig.bankTransfer.iban)}</strong>
+                    </div>
+                    <div>
+                        <span>BIC</span>
+                        <strong>${escapeHtml(paymentConfig.bankTransfer.bic)}</strong>
+                    </div>
+                </div>
+            `;
+        } else {
+            paymentTransferDetails.classList.add('is-hidden');
+            paymentTransferDetails.innerHTML = '';
+        }
+    }
+};
+
+const loadPaymentConfig = async () => {
+    try {
+        const response = await fetch('/api/payments/config');
+
+        if (!response.ok) {
+            return;
+        }
+
+        const config = await response.json();
+        if (config && typeof config === 'object') {
+            paymentConfig = {
+                ...paymentConfig,
+                ...config,
+                bankTransfer: {
+                    ...paymentConfig.bankTransfer,
+                    ...(config.bankTransfer || {})
+                }
+            };
+        }
+    } catch (error) {
+        // Static preview via Python server has no payment config endpoint.
+    } finally {
+        updatePaymentMethodDetails();
+    }
+};
+
+const closePaymentModal = () => {
+    paymentModal?.classList.add('is-hidden');
+
+    if (paymentStatus) {
+        paymentStatus.textContent = '';
+    }
+
+    activePaymentOfferId = null;
+    syncModalBodyState();
+};
+
+const openPaymentModal = (offerId) => {
+    if (!paymentModal || !activeChatBusiness) {
+        return;
+    }
+
+    const offer = getChatThread(activeChatBusiness.name).find((message) => message.type === 'offer' && message.offerId === offerId);
+
+    if (!offer) {
+        return;
+    }
+
+    activePaymentOfferId = offerId;
+
+    if (paymentBusiness) {
+        paymentBusiness.textContent = activeChatBusiness.name;
+    }
+
+    if (paymentAmount) {
+        paymentAmount.textContent = formatCurrency(offer.amount);
+    }
+
+    if (paymentStatus) {
+        paymentStatus.textContent = '';
+    }
+
+    const preferredMethod = offer.paymentMethod || 'stripe';
+    const selectedOption = paymentForm?.querySelector(`input[name="paymentMethod"][value="${preferredMethod}"]`);
+    if (selectedOption) {
+        selectedOption.checked = true;
+    }
+
+    updatePaymentMethodDetails();
+
+    paymentModal.classList.remove('is-hidden');
+    syncModalBodyState();
+
+    window.setTimeout(() => {
+        selectedOption?.focus();
+    }, 120);
+};
+
 const renderChatThread = () => {
     if (!contractorChatMessages || !activeChatBusiness) {
         return;
@@ -317,7 +803,7 @@ const renderChatThread = () => {
                             <strong>${escapeHtml(message.author)}</strong>
                             <span>${formatChatTime(message.timestamp)}</span>
                         </div>
-                        <div class="chat-offer-card is-${message.status}">
+                        <div class="chat-offer-card is-${getOfferStateClass(message)}">
                             <div class="chat-offer-topline">Angebot im Direktchat</div>
                             <h3>${escapeHtml(message.title)}</h3>
                             <p>${escapeHtml(message.description)}</p>
@@ -328,12 +814,19 @@ const renderChatThread = () => {
                                 </div>
                                 <div>
                                     <span class="chat-offer-label">Status</span>
-                                    <strong>${message.status === 'paid' ? 'Bezahlt' : 'Offen'}</strong>
+                                    <strong>${getOfferStatusLabel(message)}</strong>
+                                </div>
+                                <div>
+                                    <span class="chat-offer-label">Zahlungsart</span>
+                                    <strong>${message.paymentMethod ? escapeHtml(getPaymentMethodLabel(message.paymentMethod)) : 'Waehlen beim Bezahlen'}</strong>
+                                </div>
+                                <div>
+                                    <span class="chat-offer-label">Offen</span>
+                                    <strong>${formatCurrency(getOutstandingAmount(message))}</strong>
                                 </div>
                             </div>
-                            ${message.status === 'open'
-                                ? `<button type="button" class="btn btn-primary chat-offer-pay-btn" data-offer-id="${escapeHtml(message.offerId)}"><i class="fas fa-credit-card"></i> Jetzt bezahlen</button>`
-                                : '<div class="chat-offer-paid"><i class="fas fa-circle-check"></i> Zahlung in Nailit bestätigt</div>'}
+                            ${getOfferStatusNote(message) ? `<div class="chat-offer-note">${escapeHtml(getOfferStatusNote(message))}</div>` : ''}
+                            <div class="chat-offer-actions">${renderOfferActions(message)}</div>
                         </div>
                     </article>
                 `;
@@ -384,6 +877,7 @@ const openContractorChat = (business) => {
 };
 
 const closeContractorChat = () => {
+    closePaymentModal();
     contractorChatModal?.classList.add('is-hidden');
     syncModalBodyState();
 };
@@ -531,8 +1025,51 @@ const createOfferMessage = (business) => {
         description: offer.description,
         amount: offer.amount,
         status: 'open',
+        amountPaid: 0,
+        paymentMethod: '',
         timestamp: new Date().toISOString()
     };
+};
+
+const pushBusinessChatEvent = (text) => {
+    if (!activeChatBusiness || !text) {
+        return;
+    }
+
+    const updatedThread = [
+        ...getChatThread(activeChatBusiness.name),
+        {
+            sender: 'business',
+            author: activeChatBusiness.name,
+            text,
+            timestamp: new Date().toISOString()
+        }
+    ];
+
+    saveChatThread(activeChatBusiness.name, updatedThread);
+};
+
+const updateOfferMessage = (offerId, transform) => {
+    if (!activeChatBusiness) {
+        return null;
+    }
+
+    let updatedOffer = null;
+    const updatedThread = getChatThread(activeChatBusiness.name).map((message) => {
+        if (message.type === 'offer' && message.offerId === offerId) {
+            updatedOffer = transform(message);
+            return updatedOffer;
+        }
+
+        return message;
+    });
+
+    if (!updatedOffer) {
+        return null;
+    }
+
+    saveChatThread(activeChatBusiness.name, updatedThread);
+    return updatedOffer;
 };
 
 const getAvailabilityIndicator = (availability) => {
@@ -1296,6 +1833,104 @@ contractorChatForm?.addEventListener('submit', (event) => {
 
 document.addEventListener('click', (event) => {
     const payTrigger = event.target.closest('[data-offer-id]');
+    const invoiceTrigger = event.target.closest('[data-download-invoice]');
+    const transferTrigger = event.target.closest('[data-copy-transfer]');
+    const partialTrigger = event.target.closest('[data-offer-partial]');
+    const completeTrigger = event.target.closest('[data-offer-complete]');
+    const cancelTrigger = event.target.closest('[data-offer-cancel]');
+
+    if (invoiceTrigger && activeChatBusiness) {
+        event.preventDefault();
+
+        const offerMessage = getChatThread(activeChatBusiness.name).find((message) => message.type === 'offer' && message.offerId === invoiceTrigger.dataset.downloadInvoice);
+        if (offerMessage) {
+            downloadOfferInvoice(offerMessage);
+        }
+
+        return;
+    }
+
+    if (transferTrigger && activeChatBusiness) {
+        event.preventDefault();
+
+        const offerMessage = getChatThread(activeChatBusiness.name).find((message) => message.type === 'offer' && message.offerId === transferTrigger.dataset.copyTransfer);
+        const iban = offerMessage?.transferIban || paymentConfig.bankTransfer.iban;
+        navigator.clipboard?.writeText(iban).catch(() => {});
+
+        if (contractorChatStatus) {
+            contractorChatStatus.textContent = `IBAN fuer ${activeChatBusiness.name} wurde in die Zwischenablage kopiert.`;
+        }
+
+        return;
+    }
+
+    if (partialTrigger && activeChatBusiness) {
+        event.preventDefault();
+
+        const updatedOffer = updateOfferMessage(partialTrigger.dataset.offerPartial, (message) => {
+            const paymentAmount = getNextPartialAmount(message);
+            const totalPaid = Math.min(Number(message.amount || 0), getPaidAmount(message) + paymentAmount);
+            const outstandingAmount = Math.max(0, Number(message.amount || 0) - totalPaid);
+
+            return {
+                ...message,
+                status: outstandingAmount > 0 ? 'partial' : 'paid',
+                amountPaid: totalPaid,
+                paidAt: outstandingAmount > 0 ? message.paidAt || new Date().toISOString() : new Date().toISOString()
+            };
+        });
+
+        if (updatedOffer) {
+            pushBusinessChatEvent(`Teilzahlung fuer ${updatedOffer.title} erfasst: ${formatCurrency(getPaidAmount(updatedOffer))} von ${formatCurrency(updatedOffer.amount)} sind jetzt bezahlt.`);
+            if (contractorChatStatus) {
+                contractorChatStatus.textContent = `Teilzahlung fuer ${activeChatBusiness.name} wurde aktualisiert.`;
+            }
+            renderChatThread();
+        }
+
+        return;
+    }
+
+    if (completeTrigger && activeChatBusiness) {
+        event.preventDefault();
+
+        const updatedOffer = updateOfferMessage(completeTrigger.dataset.offerComplete, (message) => ({
+            ...message,
+            status: 'paid',
+            amountPaid: Number(message.amount || 0),
+            paidAt: new Date().toISOString()
+        }));
+
+        if (updatedOffer) {
+            pushBusinessChatEvent(`Restzahlung fuer ${updatedOffer.title} bestaetigt. Das Angebot ist jetzt vollstaendig bezahlt.`);
+            if (contractorChatStatus) {
+                contractorChatStatus.textContent = `Angebot fuer ${activeChatBusiness.name} wurde vollstaendig bezahlt markiert.`;
+            }
+            renderChatThread();
+        }
+
+        return;
+    }
+
+    if (cancelTrigger && activeChatBusiness) {
+        event.preventDefault();
+
+        const updatedOffer = updateOfferMessage(cancelTrigger.dataset.offerCancel, (message) => ({
+            ...message,
+            status: 'cancelled',
+            cancelledAt: new Date().toISOString()
+        }));
+
+        if (updatedOffer) {
+            pushBusinessChatEvent(`Das Angebot ${updatedOffer.title} wurde im Direktchat storniert.`);
+            if (contractorChatStatus) {
+                contractorChatStatus.textContent = `Angebot fuer ${activeChatBusiness.name} wurde storniert.`;
+            }
+            renderChatThread();
+        }
+
+        return;
+    }
 
     if (!payTrigger || !activeChatBusiness) {
         return;
@@ -1303,24 +1938,102 @@ document.addEventListener('click', (event) => {
 
     event.preventDefault();
 
+    openPaymentModal(payTrigger.dataset.offerId);
+});
+
+paymentForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    if (!activeChatBusiness || !activePaymentOfferId) {
+        return;
+    }
+
+    const formData = new FormData(paymentForm);
+    const paymentMethod = String(formData.get('paymentMethod') || '').trim();
+
+    if (!paymentMethod) {
+        if (paymentStatus) {
+            paymentStatus.textContent = 'Bitte waehle zuerst eine Zahlungsart aus.';
+        }
+
+        return;
+    }
+
+    const existingOffer = getChatThread(activeChatBusiness.name).find((message) => message.type === 'offer' && message.offerId === activePaymentOfferId);
+    if (!existingOffer) {
+        return;
+    }
+
+    const invoiceData = createInvoiceData({
+        business: activeChatBusiness,
+        offer: existingOffer,
+        paymentMethod
+    });
+    let providerUrl = getProviderCheckoutUrl(paymentMethod);
+    const isImmediatePayment = IMMEDIATE_PAYMENT_METHODS.has(paymentMethod);
+
+    if (paymentMethod === 'stripe' && paymentConfig.stripeEnabled) {
+        try {
+            const session = await createStripeCheckoutSession({
+                offer: existingOffer,
+                business: activeChatBusiness
+            });
+            providerUrl = session.url || providerUrl;
+        } catch (error) {
+            if (paymentStatus) {
+                paymentStatus.textContent = error.message || 'Stripe Checkout konnte nicht gestartet werden.';
+            }
+
+            if (!providerUrl) {
+                return;
+            }
+        }
+    }
+
+    if (providerUrl) {
+        window.open(providerUrl, '_blank', 'noopener');
+    }
+
     const updatedThread = getChatThread(activeChatBusiness.name).map((message) => {
-        if (message.type === 'offer' && message.offerId === payTrigger.dataset.offerId) {
+        if (message.type === 'offer' && message.offerId === activePaymentOfferId) {
             return {
                 ...message,
-                status: 'paid',
-                paidAt: new Date().toISOString()
+                status: isImmediatePayment ? 'paid' : 'pending',
+                paymentMethod,
+                amountPaid: isImmediatePayment ? Number(message.amount || 0) : getPaidAmount(message),
+                paidAt: isImmediatePayment ? new Date().toISOString() : '',
+                providerRedirected: Boolean(providerUrl),
+                ...invoiceData
             };
         }
 
         return message;
     });
 
+    updatedThread.push({
+        sender: 'business',
+        author: activeChatBusiness.name,
+        text: paymentMethod === 'invoice'
+            ? `Danke. Wir haben dir die Rechnung ${invoiceData.invoiceNumber} direkt in den Chat gelegt. Du kannst sie sofort als PDF herunterladen.`
+            : paymentMethod === 'transfer'
+                ? `Danke. Bitte ueberweise den Betrag mit der Referenz ${invoiceData.invoiceNumber}. Die Bankdaten und die PDF-Rechnung stehen jetzt im Chat bereit.`
+                : `Danke. Die Zahlung per ${getPaymentMethodLabel(paymentMethod)} ist eingegangen. Wir bestaetigen den Einsatz jetzt direkt ueber Nailit.`,
+        timestamp: new Date().toISOString()
+    });
+
     saveChatThread(activeChatBusiness.name, updatedThread);
 
     if (contractorChatStatus) {
-        contractorChatStatus.textContent = `Zahlung fuer ${activeChatBusiness.name} wurde in dieser Demo erfolgreich bestaetigt.`;
+        contractorChatStatus.textContent = paymentMethod === 'invoice'
+            ? `Rechnung ${invoiceData.invoiceNumber} fuer ${activeChatBusiness.name} wurde erstellt.`
+            : paymentMethod === 'transfer'
+                ? `Ueberweisungsdaten fuer ${activeChatBusiness.name} wurden bereitgestellt.`
+                : paymentMethod === 'stripe' && !providerUrl
+                    ? `Stripe ist fuer ${activeChatBusiness.name} aktuell nur im Demo-Modus verfuegbar.`
+                    : `Zahlung fuer ${activeChatBusiness.name} wurde per ${getPaymentMethodLabel(paymentMethod)} bestaetigt.`;
     }
 
+    closePaymentModal();
     renderChatThread();
 });
 
@@ -1330,6 +2043,12 @@ authModalClose?.addEventListener('click', closeAuthModal);
 authModalBackdrop?.addEventListener('click', closeAuthModal);
 contractorChatClose?.addEventListener('click', closeContractorChat);
 contractorChatBackdrop?.addEventListener('click', closeContractorChat);
+paymentClose?.addEventListener('click', closePaymentModal);
+paymentBackdrop?.addEventListener('click', closePaymentModal);
+paymentCancel?.addEventListener('click', closePaymentModal);
+paymentForm?.querySelectorAll('input[name="paymentMethod"]').forEach((field) => {
+    field.addEventListener('change', updatePaymentMethodDetails);
+});
 directoryBackLink?.addEventListener('click', (event) => {
     event.preventDefault();
     goToHomepage();
@@ -1337,10 +2056,11 @@ directoryBackLink?.addEventListener('click', (event) => {
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
-        const anyModalOpen = [aiDiagnoseModal, accountsSection, contractorChatModal].some((modal) => modal && !modal.classList.contains('is-hidden'));
+        const anyModalOpen = [aiDiagnoseModal, accountsSection, contractorChatModal, paymentModal].some((modal) => modal && !modal.classList.contains('is-hidden'));
 
         closeAiDiagnoseModal();
         closeAuthModal();
+        closePaymentModal();
         closeContractorChat();
 
         if (!anyModalOpen && isContractorsPage) {
@@ -1354,6 +2074,7 @@ registerForm?.querySelectorAll('input[name="registerRole"]').forEach((field) => 
 });
 
 updateRegisterRoleFields();
+loadPaymentConfig();
 
 if (registerForm) {
     registerForm.addEventListener('submit', (event) => {
