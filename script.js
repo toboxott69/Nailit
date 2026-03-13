@@ -10,6 +10,14 @@ const heroServiceSearch = document.getElementById('heroServiceSearch');
 const heroServiceInput = document.getElementById('heroServiceInput');
 const heroPhotoInput = document.getElementById('heroPhotoInput');
 const heroPhotoTrigger = document.getElementById('heroPhotoTrigger');
+const contractorSearchForm = document.getElementById('contractorSearchForm');
+const contractorSearchInput = document.getElementById('contractorSearchInput');
+const contractorTradeFilter = document.getElementById('contractorTradeFilter');
+const contractorCityFilter = document.getElementById('contractorCityFilter');
+const contractorResetButton = document.getElementById('contractorResetButton');
+const contractorResultCount = document.getElementById('contractorResultCount');
+const contractorEmptyState = document.getElementById('contractorEmptyState');
+const contractorCards = Array.from(document.querySelectorAll('.contractor-card'));
 const navAuthLinks = document.querySelectorAll('.nav-auth [data-auth-view]');
 const authTabs = document.querySelectorAll('.auth-tab');
 const registerForm = document.getElementById('registerForm');
@@ -25,6 +33,16 @@ const loginError = document.getElementById('loginError');
 const aiDiagnoseModal = document.getElementById('ai-diagnose');
 const aiDiagnoseClose = document.getElementById('aiDiagnoseClose');
 const aiDiagnoseBackdrop = document.getElementById('aiDiagnoseBackdrop');
+const contractorChatModal = document.getElementById('contractorChatModal');
+const contractorChatBackdrop = document.getElementById('contractorChatBackdrop');
+const contractorChatClose = document.getElementById('contractorChatClose');
+const contractorChatTitle = document.getElementById('contractorChatTitle');
+const contractorChatSubtitle = document.getElementById('contractorChatSubtitle');
+const contractorChatMessages = document.getElementById('contractorChatMessages');
+const contractorChatForm = document.getElementById('contractorChatForm');
+const contractorChatInput = document.getElementById('contractorChatInput');
+const contractorChatStatus = document.getElementById('contractorChatStatus');
+const directoryBackLink = document.getElementById('directoryBackLink');
 const navUserStatus = document.getElementById('navUserStatus');
 const navUserName = document.getElementById('navUserName');
 const navUserRole = document.getElementById('navUserRole');
@@ -45,11 +63,30 @@ const issueLocation = document.getElementById('issueLocation');
 const propertyType = document.getElementById('propertyType');
 const urgencyField = document.getElementById('urgency');
 const aiSubmitButton = aiIssueForm?.querySelector('button[type="submit"]');
+const contractorSection = document.getElementById('contractors');
+const isContractorsPage = window.location.pathname.endsWith('/contractors.html') || window.location.pathname.endsWith('contractors.html');
+
+const SEARCH_ALIASES = {
+    elektriker: ['elektro', 'elektrik', 'strom', 'steckdose', 'sicherung'],
+    elektro: ['elektriker', 'elektrik', 'strom', 'steckdose', 'sicherung'],
+    sanitar: ['sanitaer', 'sanitar', 'installateur', 'klempner', 'wasser', 'rohr'],
+    sanitaer: ['sanitar', 'installateur', 'klempner', 'wasser', 'rohr'],
+    installateur: ['sanitaer', 'sanitar', 'klempner', 'wasser', 'rohr'],
+    klempner: ['sanitaer', 'sanitar', 'installateur', 'wasser', 'rohr'],
+    dachdecker: ['dach', 'dachsanierung', 'dachrinne', 'ziegel'],
+    dach: ['dachdecker', 'dachsanierung', 'dachrinne', 'ziegel'],
+    maler: ['streichen', 'farbe', 'wand', 'fassade'],
+    heizung: ['sanitaer', 'heizungsinstallation', 'waermepumpe'],
+    klima: ['heizung', 'klimaanlage', 'lueftung']
+};
 
 const STORAGE_KEYS = {
     accounts: 'nailit.accounts',
-    session: 'nailit.session'
+    session: 'nailit.session',
+    chats: 'nailit.chats'
 };
+
+let activeChatBusiness = null;
 
 const businesses = {
     sanitaer: [
@@ -230,7 +267,7 @@ const setMenuState = (isOpen) => {
 };
 
 const syncModalBodyState = () => {
-    const anyModalOpen = [aiDiagnoseModal, accountsSection].some((modal) => modal && !modal.classList.contains('is-hidden'));
+    const anyModalOpen = [aiDiagnoseModal, accountsSection, contractorChatModal].some((modal) => modal && !modal.classList.contains('is-hidden'));
     body.classList.toggle('modal-open', anyModalOpen);
 };
 
@@ -264,6 +301,97 @@ const closeAuthModal = () => {
     syncModalBodyState();
 };
 
+const renderChatThread = () => {
+    if (!contractorChatMessages || !activeChatBusiness) {
+        return;
+    }
+
+    const messages = ensureChatThread(activeChatBusiness);
+
+    contractorChatMessages.innerHTML = messages.length
+        ? messages.map((message) => {
+            if (message.type === 'offer') {
+                return `
+                    <article class="chat-message is-${message.sender}">
+                        <div class="chat-message-meta">
+                            <strong>${escapeHtml(message.author)}</strong>
+                            <span>${formatChatTime(message.timestamp)}</span>
+                        </div>
+                        <div class="chat-offer-card is-${message.status}">
+                            <div class="chat-offer-topline">Angebot im Direktchat</div>
+                            <h3>${escapeHtml(message.title)}</h3>
+                            <p>${escapeHtml(message.description)}</p>
+                            <div class="chat-offer-footer">
+                                <div>
+                                    <span class="chat-offer-label">Betrag</span>
+                                    <strong>${formatCurrency(message.amount)}</strong>
+                                </div>
+                                <div>
+                                    <span class="chat-offer-label">Status</span>
+                                    <strong>${message.status === 'paid' ? 'Bezahlt' : 'Offen'}</strong>
+                                </div>
+                            </div>
+                            ${message.status === 'open'
+                                ? `<button type="button" class="btn btn-primary chat-offer-pay-btn" data-offer-id="${escapeHtml(message.offerId)}"><i class="fas fa-credit-card"></i> Jetzt bezahlen</button>`
+                                : '<div class="chat-offer-paid"><i class="fas fa-circle-check"></i> Zahlung in Nailit bestätigt</div>'}
+                        </div>
+                    </article>
+                `;
+            }
+
+            return `
+                <article class="chat-message is-${message.sender}">
+                    <div class="chat-message-meta">
+                        <strong>${escapeHtml(message.author)}</strong>
+                        <span>${formatChatTime(message.timestamp)}</span>
+                    </div>
+                    <div class="chat-message-bubble">${escapeHtml(message.text)}</div>
+                </article>
+            `;
+        }).join('')
+        : '<div class="contractor-chat-empty">Noch keine Nachrichten. Starte den Chat direkt ueber Nailit.</div>';
+
+    contractorChatMessages.scrollTop = contractorChatMessages.scrollHeight;
+};
+
+const openContractorChat = (business) => {
+    const session = getSession();
+    const chatIdentity = session?.role === 'kunde'
+        ? session.name
+        : 'Gast';
+
+    activeChatBusiness = business;
+
+    if (contractorChatTitle) {
+        contractorChatTitle.textContent = `Chat mit ${business.name}`;
+    }
+
+    if (contractorChatSubtitle) {
+        contractorChatSubtitle.textContent = `${business.trade} in ${business.city}. Schreibe dem Betrieb direkt ueber die Plattform.`;
+    }
+
+    if (contractorChatStatus) {
+        contractorChatStatus.textContent = `Du schreibst als ${chatIdentity}. Nachrichten werden in dieser Demo lokal gespeichert.`;
+    }
+
+    contractorChatModal?.classList.remove('is-hidden');
+    syncModalBodyState();
+    renderChatThread();
+
+    window.setTimeout(() => {
+        contractorChatInput?.focus();
+    }, 200);
+};
+
+const closeContractorChat = () => {
+    contractorChatModal?.classList.add('is-hidden');
+    syncModalBodyState();
+};
+
+const goToHomepage = () => {
+    window.location.href = 'index.html#home';
+};
+
 const readStorage = (key, fallback) => {
     try {
         const rawValue = window.localStorage.getItem(key);
@@ -295,6 +423,172 @@ const saveSession = (session) => {
 
 const clearSession = () => {
     window.localStorage.removeItem(STORAGE_KEYS.session);
+};
+
+const getChatThreads = () => {
+    return readStorage(STORAGE_KEYS.chats, {});
+};
+
+const saveChatThreads = (threads) => {
+    writeStorage(STORAGE_KEYS.chats, threads);
+};
+
+const getChatThreadKey = (businessName) => {
+    const session = getSession();
+    const scope = normalizeSearchText(session?.email || 'guest').replace(/\s+/g, '-');
+    const business = normalizeSearchText(businessName).replace(/\s+/g, '-');
+    return `${scope}::${business}`;
+};
+
+const getChatThread = (businessName) => {
+    const threads = getChatThreads();
+    return threads[getChatThreadKey(businessName)] || [];
+};
+
+const saveChatThread = (businessName, messages) => {
+    const threads = getChatThreads();
+    threads[getChatThreadKey(businessName)] = messages;
+    saveChatThreads(threads);
+};
+
+const formatChatTime = (value) => {
+    return new Intl.DateTimeFormat('de-DE', {
+        hour: '2-digit',
+        minute: '2-digit'
+    }).format(new Date(value));
+};
+
+const escapeHtml = (value) => {
+    return String(value || '').replace(/[&<>"']/g, (character) => {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;'
+        }[character] || character;
+    });
+};
+
+const createBusinessReply = (business, session) => {
+    const firstName = String(session?.name || 'dir').trim().split(/\s+/)[0] || 'dir';
+    return `${firstName}, danke fuer deine Nachricht an ${business.name}. Wir pruefen gerade dein Anliegen zu ${business.trade} in ${business.city} und melden uns schnell mit einem Rueckruf- oder Terminfenster.`;
+};
+
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR'
+    }).format(value);
+};
+
+const getDemoOfferDetails = (business) => {
+    const normalizedTrade = normalizeSearchText(business.trade);
+    const offers = {
+        sanitar: {
+            title: 'Sanitär-Soforthilfe',
+            amount: 189,
+            description: 'Anfahrt, Erstprüfung und kleine Sofortmaßnahmen inklusive.'
+        },
+        sanitaer: {
+            title: 'Sanitär-Soforthilfe',
+            amount: 189,
+            description: 'Anfahrt, Erstprüfung und kleine Sofortmaßnahmen inklusive.'
+        },
+        elektro: {
+            title: 'Elektro-Check vor Ort',
+            amount: 149,
+            description: 'Sicherheitsprüfung, Fehlerdiagnose und erste Einschätzung vor Ort.'
+        },
+        dach: {
+            title: 'Dach-Notdienst Angebot',
+            amount: 229,
+            description: 'Vor-Ort-Check, Leckageprüfung und temporäre Sicherung des Schadens.'
+        },
+        handwerk: {
+            title: 'Vor-Ort-Angebot',
+            amount: 119,
+            description: 'Ersttermin inklusive Prüfung und Angebotsbesprechung.'
+        }
+    };
+
+    return offers[normalizedTrade] || offers.handwerk;
+};
+
+const hasOpenOffer = (messages) => {
+    return messages.some((message) => message.type === 'offer' && message.status === 'open');
+};
+
+const createOfferMessage = (business) => {
+    const offer = getDemoOfferDetails(business);
+
+    return {
+        type: 'offer',
+        sender: 'business',
+        author: business.name,
+        offerId: `offer-${Date.now()}`,
+        title: offer.title,
+        description: offer.description,
+        amount: offer.amount,
+        status: 'open',
+        timestamp: new Date().toISOString()
+    };
+};
+
+const getAvailabilityIndicator = (availability) => {
+    const normalizedAvailability = normalizeSearchText(availability);
+
+    if (normalizedAvailability.includes('heute verfugbar') || normalizedAvailability.includes('sofort')) {
+        return {
+            state: 'green',
+            label: 'Sofort verfügbar',
+            detail: availability
+        };
+    }
+
+    if (normalizedAvailability.includes('stunde') || normalizedAvailability.includes('spater') || normalizedAvailability.includes('spaeter')) {
+        return {
+            state: 'yellow',
+            label: 'Später verfügbar',
+            detail: availability
+        };
+    }
+
+    return {
+        state: 'red',
+        label: 'Heute nicht verfügbar',
+        detail: availability
+    };
+};
+
+const renderAvailabilityIndicator = (availability) => {
+    const indicator = getAvailabilityIndicator(availability);
+
+    return `
+        <div class="availability-indicator is-${indicator.state}">
+            <span class="availability-dot"></span>
+            <strong>${escapeHtml(indicator.label)}</strong>
+            <span>${escapeHtml(indicator.detail)}</span>
+        </div>
+    `;
+};
+
+const ensureChatThread = (business) => {
+    const existingThread = getChatThread(business.name);
+
+    if (existingThread.length > 0) {
+        return existingThread;
+    }
+
+    const starterMessage = {
+        sender: 'business',
+        author: business.name,
+        text: `Willkommen im Nailit-Chat. Stelle hier direkt Fragen zu ${business.trade} in ${business.city} oder sende uns kurz dein Anliegen.`,
+        timestamp: new Date().toISOString()
+    };
+
+    saveChatThread(business.name, [starterMessage]);
+    return [starterMessage];
 };
 
 const clearMessages = () => {
@@ -449,19 +743,32 @@ const renderMatches = (trade) => {
     const relevantBusinesses = businesses[trade] || businesses.allround;
 
     matchList.innerHTML = relevantBusinesses.map((business) => {
+        const businessName = escapeHtml(business.name);
+        const businessSpecialty = escapeHtml(business.specialty);
+        const businessCity = escapeHtml(business.city);
+        const businessDistance = escapeHtml(business.distance);
+        const businessAvailability = escapeHtml(business.availability);
+        const businessScore = escapeHtml(business.score);
+        const businessTrade = escapeHtml(trade);
+
         return `
             <article class="match-card">
                 <div class="match-card-header">
                     <div>
-                        <strong>${business.name}</strong>
-                        <p>${business.specialty}</p>
+                        <strong>${businessName}</strong>
+                        <p>${businessSpecialty}</p>
                     </div>
-                    <strong>${business.score}</strong>
+                    <strong>${businessScore}</strong>
                 </div>
                 <div class="match-meta">
-                    <span>${business.city}</span>
-                    <span>${business.distance}</span>
-                    <span>${business.availability}</span>
+                    <span>${businessCity}</span>
+                    <span>${businessDistance}</span>
+                    <span>${businessAvailability}</span>
+                </div>
+                ${renderAvailabilityIndicator(business.availability)}
+                <div class="match-card-actions">
+                    <button type="button" class="btn btn-secondary">Profil ansehen</button>
+                    <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="${businessName}" data-chat-city="${businessCity}" data-chat-trade="${businessTrade}"><i class="fas fa-comments"></i> Direkt chatten</button>
                 </div>
             </article>
         `;
@@ -485,19 +792,32 @@ const setAnalysisResult = (result, hasFile) => {
     renderTags(result.tags, hasFile);
     if (Array.isArray(result.matches) && result.matches.length > 0 && matchList) {
         matchList.innerHTML = result.matches.map((business) => {
+            const businessName = escapeHtml(business.name);
+            const businessSpecialty = escapeHtml(business.specialty);
+            const businessCity = escapeHtml(business.city);
+            const businessDistance = escapeHtml(business.distance);
+            const businessAvailability = escapeHtml(business.availability);
+            const businessScore = escapeHtml(business.score);
+            const businessTrade = escapeHtml(result.trade);
+
             return `
                 <article class="match-card">
                     <div class="match-card-header">
                         <div>
-                            <strong>${business.name}</strong>
-                            <p>${business.specialty}</p>
+                            <strong>${businessName}</strong>
+                            <p>${businessSpecialty}</p>
                         </div>
-                        <strong>${business.score}</strong>
+                        <strong>${businessScore}</strong>
                     </div>
                     <div class="match-meta">
-                        <span>${business.city}</span>
-                        <span>${business.distance}</span>
-                        <span>${business.availability}</span>
+                        <span>${businessCity}</span>
+                        <span>${businessDistance}</span>
+                        <span>${businessAvailability}</span>
+                    </div>
+                    ${renderAvailabilityIndicator(business.availability)}
+                    <div class="match-card-actions">
+                        <button type="button" class="btn btn-secondary">Profil ansehen</button>
+                        <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="${businessName}" data-chat-city="${businessCity}" data-chat-trade="${businessTrade}"><i class="fas fa-comments"></i> Direkt chatten</button>
                     </div>
                 </article>
             `;
@@ -583,6 +903,138 @@ const syncHeroDescription = () => {
     }
 };
 
+const normalizeSearchText = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ß/g, 'ss');
+
+const getSearchTerms = (value) => {
+    const normalizedValue = normalizeSearchText(value);
+
+    if (!normalizedValue) {
+        return [];
+    }
+
+    const tokens = normalizedValue.split(/\s+/).filter(Boolean);
+    const terms = new Set([normalizedValue, ...tokens]);
+
+    tokens.forEach((token) => {
+        const aliases = SEARCH_ALIASES[token] || [];
+        aliases.forEach((alias) => terms.add(normalizeSearchText(alias)));
+    });
+
+    if (SEARCH_ALIASES[normalizedValue]) {
+        SEARCH_ALIASES[normalizedValue].forEach((alias) => terms.add(normalizeSearchText(alias)));
+    }
+
+    return Array.from(terms);
+};
+
+const FILTER_VALUE_MAP = {
+    trade: {
+        sanitar: 'sanitär',
+        sanitaer: 'sanitär',
+        elektro: 'elektro',
+        dach: 'dach'
+    },
+    city: {
+        berlin: 'berlin',
+        hamburg: 'hamburg',
+        munchen: 'münchen',
+        muenchen: 'münchen'
+    }
+};
+
+const navigateToContractorsPage = ({ query = '', trade = '', city = '' } = {}) => {
+    const targetUrl = new URL('contractors.html', window.location.href);
+
+    if (query) {
+        targetUrl.searchParams.set('q', query);
+    }
+
+    if (trade) {
+        targetUrl.searchParams.set('trade', trade);
+    }
+
+    if (city) {
+        targetUrl.searchParams.set('city', city);
+    }
+
+    window.location.href = targetUrl.toString();
+};
+
+const applyContractorFiltersFromUrl = () => {
+    if (!contractorSearchInput) {
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q') || '';
+    const trade = normalizeSearchText(params.get('trade') || '');
+    const city = normalizeSearchText(params.get('city') || '');
+
+    contractorSearchInput.value = query;
+
+    if (contractorTradeFilter) {
+        contractorTradeFilter.value = FILTER_VALUE_MAP.trade[trade] || '';
+    }
+
+    if (contractorCityFilter) {
+        contractorCityFilter.value = FILTER_VALUE_MAP.city[city] || '';
+    }
+
+    updateContractorSearch();
+};
+
+const runHeroManualSearch = (query) => {
+    navigateToContractorsPage({ query });
+};
+
+const updateContractorSearch = () => {
+    if (!contractorCards.length) {
+        return;
+    }
+
+    const query = String(contractorSearchInput?.value || '').trim();
+    const searchTerms = getSearchTerms(query);
+    const trade = normalizeSearchText(contractorTradeFilter?.value || '');
+    const city = normalizeSearchText(contractorCityFilter?.value || '');
+
+    let visibleCount = 0;
+
+    contractorCards.forEach((card) => {
+        const searchableText = normalizeSearchText([
+            card.dataset.name,
+            card.dataset.trade,
+            card.dataset.city,
+            card.dataset.tags,
+            card.textContent
+        ].join(' '));
+
+        const cardTrade = normalizeSearchText(card.dataset.trade);
+        const cardCity = normalizeSearchText(card.dataset.city);
+
+        const matchesQuery = !searchTerms.length || searchTerms.some((term) => searchableText.includes(term));
+        const matchesTrade = !trade || cardTrade === trade;
+        const matchesCity = !city || cardCity === city;
+        const isVisible = matchesQuery && matchesTrade && matchesCity;
+
+        card.classList.toggle('is-hidden', !isVisible);
+
+        if (isVisible) {
+            visibleCount += 1;
+        }
+    });
+
+    if (contractorResultCount) {
+        contractorResultCount.textContent = `${visibleCount} Betrieb${visibleCount === 1 ? '' : 'e'} gefunden`;
+    }
+
+    contractorEmptyState?.classList.toggle('is-hidden', visibleCount > 0);
+};
+
 hamburger.addEventListener('click', toggleMenu);
 hamburger.addEventListener('keydown', (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -658,6 +1110,32 @@ heroPhotoTrigger?.addEventListener('click', () => {
     openAiDiagnoseModal();
 });
 
+contractorSearchInput?.addEventListener('input', updateContractorSearch);
+contractorTradeFilter?.addEventListener('change', updateContractorSearch);
+contractorCityFilter?.addEventListener('change', updateContractorSearch);
+contractorSearchForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+    updateContractorSearch();
+});
+contractorResetButton?.addEventListener('click', () => {
+    if (contractorSearchInput) {
+        contractorSearchInput.value = '';
+    }
+
+    if (contractorTradeFilter) {
+        contractorTradeFilter.value = '';
+    }
+
+    if (contractorCityFilter) {
+        contractorCityFilter.value = '';
+    }
+
+    updateContractorSearch();
+});
+
+updateContractorSearch();
+applyContractorFiltersFromUrl();
+
 if (heroServiceInput) {
     heroServiceInput.addEventListener('input', syncHeroDescription);
     syncHeroDescription();
@@ -725,7 +1203,11 @@ if (heroServiceSearch) {
         event.preventDefault();
 
         const query = String(heroServiceInput?.value || '').trim();
-        const selectedPhoto = heroPhotoInput?.files[0];
+
+        if (!query) {
+            heroServiceInput?.focus();
+            return;
+        }
 
         if (issueDescription && query) {
             issueDescription.value = query;
@@ -733,27 +1215,137 @@ if (heroServiceSearch) {
 
         syncHeroDescription();
 
-        if (selectedPhoto) {
-            syncFileToAnalysisUpload(selectedPhoto);
-        }
-
-        openAiDiagnoseModal();
-
-        window.setTimeout(() => {
-            issueLocation?.focus();
-        }, 250);
+        runHeroManualSearch(query);
     });
 }
+
+document.addEventListener('click', (event) => {
+    const trigger = event.target.closest('[data-chat-business]');
+
+    if (!trigger) {
+        return;
+    }
+
+    event.preventDefault();
+
+    openContractorChat({
+        name: trigger.dataset.chatBusiness,
+        city: trigger.dataset.chatCity || 'Deutschland',
+        trade: trigger.dataset.chatTrade || 'Handwerk'
+    });
+});
+
+contractorChatForm?.addEventListener('submit', (event) => {
+    event.preventDefault();
+
+    if (!activeChatBusiness || !contractorChatInput) {
+        return;
+    }
+
+    const session = getSession();
+    const senderName = session?.role === 'kunde' ? session.name : 'Gast';
+    const text = String(contractorChatInput.value || '').trim();
+
+    if (!text) {
+        contractorChatInput.focus();
+        return;
+    }
+
+    const customerMessage = {
+        sender: 'customer',
+        author: senderName,
+        text,
+        timestamp: new Date().toISOString()
+    };
+
+    const nextThread = [...ensureChatThread(activeChatBusiness), customerMessage];
+    saveChatThread(activeChatBusiness.name, nextThread);
+    contractorChatInput.value = '';
+
+    if (contractorChatStatus) {
+        contractorChatStatus.textContent = `${activeChatBusiness.name} antwortet ueber Nailit...`;
+    }
+
+    renderChatThread();
+
+    window.setTimeout(() => {
+        const currentThread = getChatThread(activeChatBusiness.name);
+        const updatedThread = [
+            ...currentThread,
+            {
+                sender: 'business',
+                author: activeChatBusiness.name,
+                text: createBusinessReply(activeChatBusiness, { name: senderName }),
+                timestamp: new Date().toISOString()
+            }
+        ];
+
+        if (!hasOpenOffer(currentThread)) {
+            updatedThread.push(createOfferMessage(activeChatBusiness));
+        }
+
+        saveChatThread(activeChatBusiness.name, updatedThread);
+
+        if (contractorChatStatus) {
+            contractorChatStatus.textContent = `Du schreibst als ${senderName}. Nachrichten werden in dieser Demo lokal gespeichert.`;
+        }
+
+        renderChatThread();
+    }, 550);
+});
+
+document.addEventListener('click', (event) => {
+    const payTrigger = event.target.closest('[data-offer-id]');
+
+    if (!payTrigger || !activeChatBusiness) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const updatedThread = getChatThread(activeChatBusiness.name).map((message) => {
+        if (message.type === 'offer' && message.offerId === payTrigger.dataset.offerId) {
+            return {
+                ...message,
+                status: 'paid',
+                paidAt: new Date().toISOString()
+            };
+        }
+
+        return message;
+    });
+
+    saveChatThread(activeChatBusiness.name, updatedThread);
+
+    if (contractorChatStatus) {
+        contractorChatStatus.textContent = `Zahlung fuer ${activeChatBusiness.name} wurde in dieser Demo erfolgreich bestaetigt.`;
+    }
+
+    renderChatThread();
+});
 
 aiDiagnoseClose?.addEventListener('click', closeAiDiagnoseModal);
 aiDiagnoseBackdrop?.addEventListener('click', closeAiDiagnoseModal);
 authModalClose?.addEventListener('click', closeAuthModal);
 authModalBackdrop?.addEventListener('click', closeAuthModal);
+contractorChatClose?.addEventListener('click', closeContractorChat);
+contractorChatBackdrop?.addEventListener('click', closeContractorChat);
+directoryBackLink?.addEventListener('click', (event) => {
+    event.preventDefault();
+    goToHomepage();
+});
 
 window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
+        const anyModalOpen = [aiDiagnoseModal, accountsSection, contractorChatModal].some((modal) => modal && !modal.classList.contains('is-hidden'));
+
         closeAiDiagnoseModal();
         closeAuthModal();
+        closeContractorChat();
+
+        if (!anyModalOpen && isContractorsPage) {
+            goToHomepage();
+        }
     }
 });
 

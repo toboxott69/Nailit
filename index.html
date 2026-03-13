@@ -51,49 +51,58 @@
                 <div class="hero-content">
                     <p class="eyebrow"><i class="fas fa-hammer"></i> Dein Handwerker-Vermittler</p>
                     <h1>Nailit – Deutschlands schnellster Handwerker-Vermittler.</h1>
-                    <p class="hero-text">Suche direkt nach der Leistung die du brauchst – oder lade ein Foto hoch, wenn du nicht weisst was kaputt ist.</p>
+                    <p class="hero-text">Suche direkt nach der Leistung die du brauchst und finde passende Betriebe manuell.</p>
                 </div>
 
                 <!-- SEARCH BAR -->
-                <div class="hero-search-bar" id="heroSearchBar">
-                    <form class="search-bar-form" id="heroServiceSearch">
-                        <!-- Hidden file inputs -->
+                <div class="hero-search-row">
+                    <div class="hero-search-bar" id="heroSearchBar">
+                        <form class="search-bar-form" id="heroServiceSearch">
+                            <div class="search-bar-main">
+                                <div class="search-field service-field">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="heroServiceInput" name="heroServiceInput" placeholder="Welche Leistung brauchen Sie? z.B. Elektriker, Maler, Sanitär…">
+                                </div>
+                                <button type="submit" class="btn btn-primary search-submit-btn"><i class="fas fa-arrow-right"></i></button>
+                            </div>
+                            <p class="hero-search-hint">Direkt Leistung eingeben und passende Betriebe manuell suchen.</p>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="hero-scanner-row">
+                    <div class="hero-scanner-panel">
                         <input type="file" id="heroPhotoInput" name="heroPhotoInput" class="hero-photo-input" accept="image/*">
                         <input type="file" id="heroCameraInput" class="hero-photo-input" accept="image/*" capture="environment">
 
-                        <div class="search-bar-main">
-                            <div class="search-field service-field">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="heroServiceInput" name="heroServiceInput" placeholder="Welche Leistung brauchen Sie? z.B. Elektriker, Maler, Sanitär…">
+                        <div class="hero-scanner-card hero-scanner-emblem">
+                            <div class="hero-scanner-copy">
+                                <div class="hero-scanner-icon"><i class="fas fa-camera"></i></div>
+                                <p class="hero-scanner-label">Nailit Scanner</p>
+                                <h3>Schaden per Foto analysieren</h3>
+                                <p>Schaden fotografieren und per KI analysieren.</p>
                             </div>
-                            <div class="search-divider"></div>
-                            <div class="photo-options-wrapper">
-                                <button type="button" class="search-scanner-btn" id="photoOptionsToggle">
+                            <div class="hero-scanner-actions">
+                                <button type="button" class="scanner-action-btn" id="takePhotoBtn">
                                     <i class="fas fa-camera"></i>
-                                    <span>Foto</span>
-                                    <i class="fas fa-chevron-down photo-chevron"></i>
+                                    <span>Aufnehmen</span>
                                 </button>
-                                <div class="photo-dropdown is-hidden" id="photoDropdown">
-                                    <button type="button" class="photo-option" id="takePhotoBtn">
-                                        <i class="fas fa-camera"></i> Foto aufnehmen
-                                    </button>
-                                    <button type="button" class="photo-option" id="choosePhotoBtn">
-                                        <i class="fas fa-images"></i> Aus Galerie wählen
-                                    </button>
-                                </div>
+                                <button type="button" class="scanner-action-btn scanner-action-btn-secondary" id="choosePhotoBtn">
+                                    <i class="fas fa-images"></i>
+                                    <span>Galerie</span>
+                                </button>
                             </div>
-                            <button type="submit" class="btn btn-primary search-submit-btn"><i class="fas fa-arrow-right"></i></button>
                         </div>
-                    </form>
+                    </div>
+                </div>
 
-                    <!-- Photo Preview -->
+                <div class="hero-scanner-preview-row">
                     <div class="ai-scanner-preview is-hidden" id="aiScannerPreview">
                         <img id="aiPreviewImg" alt="Vorschau">
                         <button type="button" class="scanner-remove-btn" id="aiRemovePhoto"><i class="fas fa-xmark"></i></button>
                         <span class="preview-badge"><i class="fas fa-check"></i> Foto bereit</span>
                     </div>
                 </div>
-
                 <div class="trust-row">
                     <div class="trust-item"><i class="fas fa-shield-halved"></i> Geprüfte Betriebe</div>
                     <div class="trust-item"><i class="fas fa-star"></i> 4.8/5 Bewertung</div>
@@ -112,14 +121,14 @@
                     <p>Egal ob Sanitär, Elektro oder Dach – bei Nailit findest du geprüfte Fachbetriebe für jedes Gewerk.</p>
                 </div>
                 <div class="services-grid">
-                    <a href="#" class="service-card reveal delay-1"><div class="service-icon"><i class="fas fa-bolt"></i></div><h3>Elektriker</h3><p>Steckdosen, Leitungen, Sicherungskasten</p></a>
-                    <a href="#" class="service-card reveal delay-2"><div class="service-icon"><i class="fas fa-faucet-drip"></i></div><h3>Sanitär</h3><p>Rohre, Wasserhähne, Heizung</p></a>
-                    <a href="#" class="service-card reveal delay-3"><div class="service-icon"><i class="fas fa-paint-roller"></i></div><h3>Maler</h3><p>Streichen, Tapezieren, Fassade</p></a>
-                    <a href="#" class="service-card reveal delay-4"><div class="service-icon"><i class="fas fa-house-chimney"></i></div><h3>Dachdecker</h3><p>Reparatur, Neueindeckung, Dachrinne</p></a>
-                    <a href="#" class="service-card reveal delay-5"><div class="service-icon"><i class="fas fa-broom"></i></div><h3>Reinigung</h3><p>Gebäudereinigung, Grundreinigung</p></a>
-                    <a href="#" class="service-card reveal delay-6"><div class="service-icon"><i class="fas fa-leaf"></i></div><h3>Gartenbau</h3><p>Rasenpflege, Baumschnitt, Gestaltung</p></a>
-                    <a href="#" class="service-card reveal delay-7"><div class="service-icon"><i class="fas fa-truck-moving"></i></div><h3>Umzüge</h3><p>Transport, Ein-/Auspacken, Montage</p></a>
-                    <a href="#" class="service-card reveal delay-8"><div class="service-icon"><i class="fas fa-temperature-arrow-up"></i></div><h3>Heizung / Klima</h3><p>Wartung, Installation, Reparatur</p></a>
+                    <a href="contractors.html?trade=elektro" class="service-card reveal delay-1"><div class="service-icon"><i class="fas fa-bolt"></i></div><h3>Elektriker</h3><p>Steckdosen, Leitungen, Sicherungskasten</p></a>
+                    <a href="contractors.html?trade=sanit%C3%A4r" class="service-card reveal delay-2"><div class="service-icon"><i class="fas fa-faucet-drip"></i></div><h3>Sanitär</h3><p>Rohre, Wasserhähne, Heizung</p></a>
+                    <a href="contractors.html?q=maler" class="service-card reveal delay-3"><div class="service-icon"><i class="fas fa-paint-roller"></i></div><h3>Maler</h3><p>Streichen, Tapezieren, Fassade</p></a>
+                    <a href="contractors.html?trade=dach" class="service-card reveal delay-4"><div class="service-icon"><i class="fas fa-house-chimney"></i></div><h3>Dachdecker</h3><p>Reparatur, Neueindeckung, Dachrinne</p></a>
+                    <a href="contractors.html?q=reinigung" class="service-card reveal delay-5"><div class="service-icon"><i class="fas fa-broom"></i></div><h3>Reinigung</h3><p>Gebäudereinigung, Grundreinigung</p></a>
+                    <a href="contractors.html?q=gartenbau" class="service-card reveal delay-6"><div class="service-icon"><i class="fas fa-leaf"></i></div><h3>Gartenbau</h3><p>Rasenpflege, Baumschnitt, Gestaltung</p></a>
+                    <a href="contractors.html?q=umzug" class="service-card reveal delay-7"><div class="service-icon"><i class="fas fa-truck-moving"></i></div><h3>Umzüge</h3><p>Transport, Ein-/Auspacken, Montage</p></a>
+                    <a href="contractors.html?q=heizung klima" class="service-card reveal delay-8"><div class="service-icon"><i class="fas fa-temperature-arrow-up"></i></div><h3>Heizung / Klima</h3><p>Wartung, Installation, Reparatur</p></a>
                 </div>
             </div>
         </section>
@@ -156,51 +165,20 @@
             </div>
         </section>
 
-        <!-- 5. FEATURED CONTRACTORS -->
-        <section class="featured-contractors" id="contractors">
+        <!-- 5. CONTRACTOR DIRECTORY TEASER -->
+        <section class="contractor-directory-teaser" id="contractors">
             <div class="container">
                 <div class="section-header reveal">
-                    <p class="section-label">Top-bewertete Betriebe</p>
-                    <h2>Empfohlene Handwerker in deiner Nähe</h2>
-                    <p>Geprüfte Betriebe mit den besten Bewertungen unserer Kunden.</p>
+                    <p class="section-label">Neue Betriebsseite</p>
+                    <h2>Handwerker jetzt auf eigener Seite durchsuchen</h2>
+                    <p>Die Betriebssuche wurde aus der Startseite ausgelagert. Nutze die Suche oben oder öffne direkt die separate Betriebsübersicht.</p>
                 </div>
-                <div class="contractors-grid">
-                    <article class="contractor-card reveal delay-1">
-                        <div class="contractor-header">
-                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
-                            <div>
-                                <h3>Müller Sanitär GmbH</h3>
-                                <div class="contractor-rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><span>5.0 (128 Bewertungen)</span></div>
-                            </div>
-                        </div>
-                        <p class="contractor-desc">Spezialist für Badsanierung, Rohrreparaturen und Heizungsinstallation. Über 20 Jahre Erfahrung.</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin</span><span><i class="fas fa-wrench"></i> Sanitär</span></div>
-                        <a href="#" class="btn btn-secondary full-width">Profil ansehen</a>
-                    </article>
-                    <article class="contractor-card reveal delay-2">
-                        <div class="contractor-header">
-                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
-                            <div>
-                                <h3>Elektro Schmidt</h3>
-                                <div class="contractor-rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-stroke"></i><span>4.8 (94 Bewertungen)</span></div>
-                            </div>
-                        </div>
-                        <p class="contractor-desc">Meisterbetrieb für Elektroinstallation, Smart Home und Photovoltaik. Schnelle Terminvergabe.</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Hamburg</span><span><i class="fas fa-bolt"></i> Elektro</span></div>
-                        <a href="#" class="btn btn-secondary full-width">Profil ansehen</a>
-                    </article>
-                    <article class="contractor-card reveal delay-3">
-                        <div class="contractor-header">
-                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
-                            <div>
-                                <h3>Dachprofi Weber</h3>
-                                <div class="contractor-rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><span>4.9 (76 Bewertungen)</span></div>
-                            </div>
-                        </div>
-                        <p class="contractor-desc">Dachsanierung, Flachdach und Dachrinnenreinigung. Zertifizierter Innungsbetrieb.</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> München</span><span><i class="fas fa-house-chimney"></i> Dach</span></div>
-                        <a href="#" class="btn btn-secondary full-width">Profil ansehen</a>
-                    </article>
+                <div class="contractor-directory-teaser-card reveal">
+                    <div>
+                        <strong>Separate Übersicht mit Suche, Filtern und Direkt-Chat</strong>
+                        <p>Auf der neuen Betriebsseite kannst du Betriebe gezielt nach Leistung, Stadt oder Firmennamen filtern und direkt über Nailit anschreiben.</p>
+                    </div>
+                    <a href="contractors.html" class="btn btn-primary btn-lg"><i class="fas fa-arrow-right"></i> Zur Betriebsseite</a>
                 </div>
             </div>
         </section>
@@ -240,7 +218,7 @@
                     <p>Beschreibe dein Projekt und erhalte kostenlose Angebote von geprüften Betrieben in deiner Nähe.</p>
                     <div class="cta-buttons">
                         <a href="#home" class="btn btn-primary btn-lg"><i class="fas fa-file-lines"></i> Jetzt Angebot erhalten</a>
-                        <a href="#contractors" class="btn btn-white btn-lg"><i class="fas fa-search"></i> Handwerker ansehen</a>
+                        <a href="contractors.html" class="btn btn-white btn-lg"><i class="fas fa-search"></i> Handwerker ansehen</a>
                     </div>
                 </div>
             </div>
@@ -473,44 +451,49 @@
 
             </div>
         </section>
+
+        <section class="contractor-chat-modal ai-modal is-hidden" id="contractorChatModal" role="dialog" aria-modal="true" aria-labelledby="contractorChatTitle">
+            <div class="ai-modal-backdrop" id="contractorChatBackdrop"></div>
+            <div class="container ai-modal-dialog contractor-chat-dialog">
+                <button type="button" class="ai-modal-close" id="contractorChatClose" aria-label="Schliessen"><i class="fas fa-xmark"></i></button>
+
+                <div class="contractor-chat-shell">
+                    <div class="contractor-chat-header">
+                        <p class="card-topline">Plattform-Chat</p>
+                        <h2 id="contractorChatTitle">Chat mit Betrieb</h2>
+                        <p id="contractorChatSubtitle">Schreibe dem Betrieb direkt ueber Nailit.</p>
+                    </div>
+
+                    <div class="contractor-chat-thread" id="contractorChatMessages"></div>
+
+                    <form class="contractor-chat-form" id="contractorChatForm">
+                        <label class="contractor-chat-label" for="contractorChatInput">Nachricht</label>
+                        <textarea id="contractorChatInput" rows="3" placeholder="Beschreibe dein Anliegen, stelle Rueckfragen oder sende Terminvorschlaege."></textarea>
+                        <div class="contractor-chat-composer">
+                            <p class="contractor-chat-status" id="contractorChatStatus">Nachrichten werden in dieser Demo lokal innerhalb der Plattform gespeichert.</p>
+                            <button type="submit" class="btn btn-primary contractor-chat-send"><i class="fas fa-paper-plane"></i> Nachricht senden</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
     </div>
     <script src="script.js"></script>
     <script>
-    /* ── Photo dropdown + preview ── */
+    /* ── Hero scanner actions + preview ── */
     (function() {
         const photoInput = document.getElementById('heroPhotoInput');
         const cameraInput = document.getElementById('heroCameraInput');
         const preview = document.getElementById('aiScannerPreview');
         const previewImg = document.getElementById('aiPreviewImg');
         const removeBtn = document.getElementById('aiRemovePhoto');
-        const toggle = document.getElementById('photoOptionsToggle');
-        const dropdown = document.getElementById('photoDropdown');
-        const heroSearchBar = document.getElementById('heroSearchBar');
         const takeBtn = document.getElementById('takePhotoBtn');
         const chooseBtn = document.getElementById('choosePhotoBtn');
-
-        // Toggle dropdown
-        if (toggle && dropdown) {
-            toggle.addEventListener('click', function(e) {
-                e.stopPropagation();
-                dropdown.classList.toggle('is-hidden');
-                if (heroSearchBar) heroSearchBar.classList.toggle('dropdown-open', !dropdown.classList.contains('is-hidden'));
-            });
-            document.addEventListener('click', function() {
-                dropdown.classList.add('is-hidden');
-                if (heroSearchBar) heroSearchBar.classList.remove('dropdown-open');
-            });
-            dropdown.addEventListener('click', function(e) {
-                e.stopPropagation();
-            });
-        }
 
         // Take photo (camera)
         if (takeBtn && cameraInput) {
             takeBtn.addEventListener('click', function() {
                 cameraInput.click();
-                dropdown.classList.add('is-hidden');
-                if (heroSearchBar) heroSearchBar.classList.remove('dropdown-open');
             });
         }
 
@@ -518,8 +501,6 @@
         if (chooseBtn && photoInput) {
             chooseBtn.addEventListener('click', function() {
                 photoInput.click();
-                dropdown.classList.add('is-hidden');
-                if (heroSearchBar) heroSearchBar.classList.remove('dropdown-open');
             });
         }
 

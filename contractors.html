@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nailit | Betriebe finden</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="site-shell">
+        <nav class="navbar" id="navbar">
+            <div class="container nav-container">
+                <a href="index.html#home" class="logo">nail<span>it</span></a>
+                <ul class="nav-links" id="navLinks">
+                    <li><a href="index.html#services"><i class="fas fa-th-large"></i> Kategorien</a></li>
+                    <li><a href="contractors.html"><i class="fas fa-building"></i> Betriebe</a></li>
+                    <li><a href="index.html#for-contractors"><i class="fas fa-hard-hat"></i> Für Betriebe</a></li>
+                    <li><a href="index.html#support"><i class="fas fa-headset"></i> Support</a></li>
+                </ul>
+                <div class="nav-auth">
+                    <a href="#accounts" class="nav-login" id="navLoginButton" data-auth-view="login">Anmelden</a>
+                    <a href="#accounts" class="nav-cta" id="navRegisterButton" data-auth-view="register">Registrieren</a>
+                    <div class="nav-user-status is-hidden" id="navUserStatus">
+                        <div>
+                            <strong id="navUserName">-</strong>
+                            <span id="navUserRole">-</span>
+                        </div>
+                        <button type="button" class="nav-logout" id="logoutButton">Logout</button>
+                    </div>
+                    <button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark Mode umschalten">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </div>
+                <div class="hamburger" id="hamburger" aria-label="Navigation umschalten" aria-expanded="false" role="button" tabindex="0">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+
+        <header class="contractor-directory-hero">
+            <div class="container contractor-directory-intro">
+                <a href="index.html#home" class="directory-back-link" id="directoryBackLink"><i class="fas fa-arrow-left"></i> Zur Startseite</a>
+                <p class="eyebrow"><i class="fas fa-building"></i> Betriebsverzeichnis</p>
+                <h1>Finde den passenden Betrieb auf einer eigenen Übersichtsseite.</h1>
+                <p class="hero-text">Suche nach Gewerk, Stadt oder Firmennamen und starte den Kontakt direkt über Nailit.</p>
+            </div>
+        </header>
+
+        <section class="featured-contractors contractor-directory-page" id="contractors">
+            <div class="container">
+                <div class="section-header reveal">
+                    <p class="section-label">Top-bewertete Betriebe</p>
+                    <h2>Empfohlene Handwerker in deiner Nähe</h2>
+                    <p>Geprüfte Betriebe mit den besten Bewertungen unserer Kunden.</p>
+                </div>
+                <form class="contractor-search-panel" id="contractorSearchForm">
+                    <div class="contractor-search-field">
+                        <i class="fas fa-magnifying-glass"></i>
+                        <input type="text" id="contractorSearchInput" placeholder="Betrieb, Gewerk oder Stadt suchen">
+                    </div>
+                    <div class="contractor-filter-group">
+                        <label class="contractor-filter-select" for="contractorTradeFilter">
+                            <select id="contractorTradeFilter">
+                                <option value="">Alle Gewerke</option>
+                                <option value="sanitär">Sanitär</option>
+                                <option value="elektro">Elektro</option>
+                                <option value="dach">Dach</option>
+                            </select>
+                        </label>
+                        <label class="contractor-filter-select" for="contractorCityFilter">
+                            <select id="contractorCityFilter">
+                                <option value="">Alle Städte</option>
+                                <option value="berlin">Berlin</option>
+                                <option value="hamburg">Hamburg</option>
+                                <option value="münchen">München</option>
+                            </select>
+                        </label>
+                    </div>
+                </form>
+                <div class="contractor-search-meta">
+                    <p id="contractorResultCount">3 Betriebe gefunden</p>
+                    <button type="button" class="contractor-reset-btn" id="contractorResetButton">Filter zurücksetzen</button>
+                </div>
+                <div class="contractors-grid" id="contractorsGrid">
+                    <article class="contractor-card reveal delay-1" data-name="Müller Sanitär GmbH" data-trade="sanitär" data-city="berlin" data-tags="badsanierung rohrreparaturen heizungsinstallation sanitär berlin">
+                        <div class="contractor-header">
+                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
+                            <div>
+                                <h3>Müller Sanitär GmbH</h3>
+                                <div class="contractor-rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><span>5.0 (128 Bewertungen)</span></div>
+                            </div>
+                        </div>
+                        <p class="contractor-desc">Spezialist für Badsanierung, Rohrreparaturen und Heizungsinstallation. Über 20 Jahre Erfahrung.</p>
+                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin</span><span><i class="fas fa-wrench"></i> Sanitär</span></div>
+                        <div class="availability-indicator is-green"><span class="availability-dot"></span><strong>Sofort verfügbar</strong><span>Heute verfügbar</span></div>
+                        <div class="contractor-actions">
+                            <a href="#" class="btn btn-secondary">Profil ansehen</a>
+                            <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Müller Sanitär GmbH" data-chat-city="Berlin" data-chat-trade="Sanitär"><i class="fas fa-comments"></i> Direkt chatten</button>
+                        </div>
+                    </article>
+                    <article class="contractor-card reveal delay-2" data-name="Elektro Schmidt" data-trade="elektro" data-city="hamburg" data-tags="meisterbetrieb elektroinstallation smart home photovoltaik elektro hamburg">
+                        <div class="contractor-header">
+                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
+                            <div>
+                                <h3>Elektro Schmidt</h3>
+                                <div class="contractor-rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-stroke"></i><span>4.8 (94 Bewertungen)</span></div>
+                            </div>
+                        </div>
+                        <p class="contractor-desc">Meisterbetrieb für Elektroinstallation, Smart Home und Photovoltaik. Schnelle Terminvergabe.</p>
+                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Hamburg</span><span><i class="fas fa-bolt"></i> Elektro</span></div>
+                        <div class="availability-indicator is-yellow"><span class="availability-dot"></span><strong>Später verfügbar</strong><span>In 3 Stunden</span></div>
+                        <div class="contractor-actions">
+                            <a href="#" class="btn btn-secondary">Profil ansehen</a>
+                            <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Elektro Schmidt" data-chat-city="Hamburg" data-chat-trade="Elektro"><i class="fas fa-comments"></i> Direkt chatten</button>
+                        </div>
+                    </article>
+                    <article class="contractor-card reveal delay-3" data-name="Dachprofi Weber" data-trade="dach" data-city="münchen" data-tags="dachsanierung flachdach dachrinnenreinigung dach münchen">
+                        <div class="contractor-header">
+                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
+                            <div>
+                                <h3>Dachprofi Weber</h3>
+                                <div class="contractor-rating"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><span>4.9 (76 Bewertungen)</span></div>
+                            </div>
+                        </div>
+                        <p class="contractor-desc">Dachsanierung, Flachdach und Dachrinnenreinigung. Zertifizierter Innungsbetrieb.</p>
+                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> München</span><span><i class="fas fa-house-chimney"></i> Dach</span></div>
+                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>Morgen wieder verfügbar</span></div>
+                        <div class="contractor-actions">
+                            <a href="#" class="btn btn-secondary">Profil ansehen</a>
+                            <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Dachprofi Weber" data-chat-city="München" data-chat-trade="Dach"><i class="fas fa-comments"></i> Direkt chatten</button>
+                        </div>
+                    </article>
+                </div>
+                <div class="contractor-empty-state is-hidden" id="contractorEmptyState">
+                    <i class="fas fa-building-circle-xmark"></i>
+                    <strong>Kein passender Betrieb gefunden</strong>
+                    <p>Ändere den Suchbegriff oder setze die Filter zurück, um weitere Betriebe zu sehen.</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer" id="support">
+            <div class="container footer-grid reveal">
+                <div class="footer-brand">
+                    <a href="index.html#home" class="logo">nail<span>it</span></a>
+                    <p>Deine Plattform für Handwerkersuche in Deutschland. Problem beschreiben, Betrieb finden, loslegen.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
+                        <a href="#" aria-label="X / Twitter"><i class="fab fa-x-twitter"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Navigation</h3>
+                    <a href="index.html#home">Startseite</a>
+                    <a href="index.html#services">Kategorien</a>
+                    <a href="contractors.html">Betriebe</a>
+                    <a href="index.html#for-contractors">Für Betriebe</a>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <a href="mailto:support@nailit.de"><i class="fas fa-envelope"></i> support@nailit.de</a>
+                    <a href="#"><i class="fas fa-question-circle"></i> Hilfe-Center</a>
+                    <a href="#"><i class="fas fa-bug"></i> Problem melden</a>
+                    <a href="#"><i class="fas fa-shield-halved"></i> Datenschutz</a>
+                    <a href="#"><i class="fas fa-file-contract"></i> Impressum</a>
+                </div>
+            </div>
+            <div class="container footer-bottom">
+                <p>&copy; 2026 Nailit. Alle Rechte vorbehalten.</p>
+            </div>
+        </footer>
+
+        <section class="accounts auth-modal is-hidden" id="accounts" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+            <div class="auth-modal-backdrop" id="authModalBackdrop"></div>
+            <div class="container auth-modal-dialog">
+                <button type="button" class="auth-modal-close" id="authModalClose" aria-label="Schliessen"><i class="fas fa-xmark"></i></button>
+
+                <div class="auth-card-clean">
+                    <div class="auth-switch" role="tablist">
+                        <button type="button" class="auth-tab is-active" id="authRegisterTab" data-auth-view="register">Registrieren</button>
+                        <button type="button" class="auth-tab" id="authLoginTab" data-auth-view="login">Anmelden</button>
+                    </div>
+
+                    <div class="session-panel is-hidden" id="sessionPanel">
+                        <p class="card-topline">Sitzung</p>
+                        <h3 id="sessionTitle">Nicht angemeldet</h3>
+                        <p id="sessionSummary">Bitte registrieren oder anmelden.</p>
+                    </div>
+
+                    <form id="registerForm" class="account-form auth-form is-active">
+                        <fieldset class="role-choice-group">
+                            <legend>Ich bin ein</legend>
+                            <label class="role-choice"><input type="radio" name="registerRole" value="kunde" required><span><i class="fas fa-user"></i> Kunde</span></label>
+                            <label class="role-choice"><input type="radio" name="registerRole" value="betrieb" required><span><i class="fas fa-building"></i> Betrieb</span></label>
+                        </fieldset>
+
+                        <div class="form-group">
+                            <label for="registerName">Name / Firma</label>
+                            <input type="text" id="registerName" name="registerName" required placeholder="Max Mustermann">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registerEmail">E-Mail</label>
+                            <input type="email" id="registerEmail" name="registerEmail" required placeholder="name@email.de" autocomplete="email">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registerPhone">Telefonnummer</label>
+                            <input type="tel" id="registerPhone" name="registerPhone" required placeholder="+49 170 1234567" autocomplete="tel">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registerPassword">Passwort</label>
+                            <input type="password" id="registerPassword" name="registerPassword" required minlength="8" placeholder="Mind. 8 Zeichen" autocomplete="new-password">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="registerPasswordRepeat">Passwort wiederholen</label>
+                            <input type="password" id="registerPasswordRepeat" name="registerPasswordRepeat" required minlength="8" placeholder="Passwort wiederholen" autocomplete="new-password">
+                        </div>
+
+                        <div class="business-only-field" id="registerBusinessFields">
+                            <div class="form-group">
+                                <label for="registerTrade">Gewerk</label>
+                                <input type="text" id="registerTrade" name="registerTrade" placeholder="z.B. Sanitär, Elektro, Dach">
+                            </div>
+                            <div class="form-group">
+                                <label for="registerRadius">Einsatzradius</label>
+                                <input type="text" id="registerRadius" name="registerRadius" placeholder="z.B. 30 km um Berlin">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary full-width">Registrieren</button>
+                        <div class="inline-success" id="registerSuccess"></div>
+                        <div class="inline-error" id="registerError"></div>
+                    </form>
+
+                    <form id="loginForm" class="account-form auth-form">
+                        <div class="form-group">
+                            <label for="loginEmail">E-Mail</label>
+                            <input type="email" id="loginEmail" name="loginEmail" required placeholder="name@email.de" autocomplete="email">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="loginPassword">Passwort</label>
+                            <input type="password" id="loginPassword" name="loginPassword" required placeholder="Passwort" autocomplete="current-password">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary full-width">Anmelden</button>
+                        <p class="auth-forgot"><a href="#">Passwort vergessen?</a></p>
+                        <div class="inline-success" id="loginSuccess"></div>
+                        <div class="inline-error" id="loginError"></div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section class="contractor-chat-modal ai-modal is-hidden" id="contractorChatModal" role="dialog" aria-modal="true" aria-labelledby="contractorChatTitle">
+            <div class="ai-modal-backdrop" id="contractorChatBackdrop"></div>
+            <div class="container ai-modal-dialog contractor-chat-dialog">
+                <button type="button" class="ai-modal-close" id="contractorChatClose" aria-label="Schliessen"><i class="fas fa-xmark"></i></button>
+
+                <div class="contractor-chat-shell">
+                    <div class="contractor-chat-header">
+                        <p class="card-topline">Plattform-Chat</p>
+                        <h2 id="contractorChatTitle">Chat mit Betrieb</h2>
+                        <p id="contractorChatSubtitle">Schreibe dem Betrieb direkt ueber Nailit.</p>
+                    </div>
+
+                    <div class="contractor-chat-thread" id="contractorChatMessages"></div>
+
+                    <form class="contractor-chat-form" id="contractorChatForm">
+                        <label class="contractor-chat-label" for="contractorChatInput">Nachricht</label>
+                        <textarea id="contractorChatInput" rows="3" placeholder="Beschreibe dein Anliegen, stelle Rueckfragen oder sende Terminvorschlaege."></textarea>
+                        <div class="contractor-chat-composer">
+                            <p class="contractor-chat-status" id="contractorChatStatus">Nachrichten werden in dieser Demo lokal innerhalb der Plattform gespeichert.</p>
+                            <button type="submit" class="btn btn-primary contractor-chat-send"><i class="fas fa-paper-plane"></i> Nachricht senden</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
