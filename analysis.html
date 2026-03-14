@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nailit | KI-Analyse</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script>if(localStorage.getItem('nailit-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
+    <style>
+    .analysis-page { padding: 100px 0 60px; min-height: 100vh; background: var(--bg-deep); }
+    .analysis-page .directory-back-link {
+        display: inline-flex; align-items: center; gap: 8px;
+        color: var(--muted); text-decoration: none; font-size: 0.95rem;
+        margin-bottom: 24px; transition: color 0.2s;
+    }
+    .analysis-page .directory-back-link:hover { color: var(--brand); }
+    .scan-flow { max-width: 600px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
+    .scan-photo-card {
+        background: var(--surface-strong); border: 1px solid var(--line);
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0; overflow: hidden; position: relative;
+    }
+    .scan-photo-card img { width: 100%; max-height: 320px; object-fit: cover; display: block; }
+    .scan-photo-badge {
+        position: absolute; top: 14px; left: 14px;
+        background: rgba(0,0,0,0.55); color: #fff; padding: 6px 14px;
+        border-radius: 20px; font-size: 0.8rem; font-weight: 600; backdrop-filter: blur(6px);
+    }
+    .scan-photo-badge i { margin-right: 6px; }
+    .scan-chat {
+        background: var(--surface-strong); border: 1px solid var(--line); border-top: none;
+        border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        display: flex; flex-direction: column;
+    }
+    .scan-chat-messages {
+        padding: 20px; display: flex; flex-direction: column; gap: 14px;
+        max-height: 350px; overflow-y: auto; min-height: 80px;
+    }
+    .scan-msg { display: flex; gap: 10px; align-items: flex-start; animation: msgIn 0.3s ease; }
+    @keyframes msgIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .scan-msg-bot { flex-direction: row; }
+    .scan-msg-user { flex-direction: row-reverse; }
+    .scan-msg-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.85rem; flex-shrink: 0;
+    }
+    .scan-msg-bot .scan-msg-avatar { background: var(--brand); color: #fff; }
+    .scan-msg-user .scan-msg-avatar { background: var(--line-strong); color: var(--ink); }
+    .scan-msg-bubble {
+        background: var(--bg-deep); border: 1px solid var(--line); border-radius: 18px;
+        padding: 12px 16px; font-size: 0.92rem; line-height: 1.5; max-width: 85%; color: var(--ink);
+    }
+    .scan-msg-user .scan-msg-bubble { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .scan-typing { display: flex; gap: 5px; padding: 4px 0; }
+    .scan-typing span { width:8px; height:8px; border-radius:50%; background:var(--muted); animation:typeDot 1.4s infinite; }
+    .scan-typing span:nth-child(2) { animation-delay:0.2s; }
+    .scan-typing span:nth-child(3) { animation-delay:0.4s; }
+    @keyframes typeDot { 0%,60%,100%{opacity:.3;transform:scale(.8)} 30%{opacity:1;transform:scale(1.1)} }
+    .scan-chat-input {
+        border-top: 1px solid var(--line); padding: 14px 16px;
+        display: flex; gap: 10px; align-items: center;
+    }
+    .scan-chat-input input {
+        flex:1; border:1px solid var(--line); background:var(--bg); color:var(--ink);
+        border-radius:24px; padding:12px 18px; font-size:0.95rem;
+        font-family:'Manrope',sans-serif; outline:none; transition:border-color 0.2s;
+    }
+    .scan-chat-input input:focus { border-color: var(--brand); }
+    .scan-chat-input input::placeholder { color: var(--muted); }
+    .scan-chat-input button {
+        width:44px; height:44px; border-radius:50%; border:none;
+        background:var(--brand); color:#fff; font-size:1.1rem; cursor:pointer;
+        display:flex; align-items:center; justify-content:center;
+        transition:background 0.2s,transform 0.15s; flex-shrink:0;
+    }
+    .scan-chat-input button:hover { background:var(--brand-dark); transform:scale(1.05); }
+    .scan-chat-input button:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .scan-result { display:none; max-width:600px; margin:28px auto 0; flex-direction:column; gap:18px; animation:msgIn .4s ease; }
+    .scan-result.is-visible { display:flex; }
+    .scan-result-card { background:var(--surface-strong); border:1px solid var(--line); border-radius:var(--radius-lg); padding:24px; }
+    .scan-result-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+    .scan-result-header i { font-size:1.6rem; color:var(--brand); }
+    .scan-result-header h3 { font-size:1.15rem; font-weight:700; color:var(--ink); margin:0; }
+    .scan-result-summary { color:var(--muted); font-size:.95rem; line-height:1.6; margin-bottom:16px; }
+    .scan-result-tags { display:flex; gap:10px; flex-wrap:wrap; }
+    .scan-result-tag {
+        background:var(--accent-soft); border:1px solid var(--line); border-radius:12px;
+        padding:10px 16px; text-align:center; flex:1; min-width:100px;
+    }
+    .scan-result-tag span { display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:4px; }
+    .scan-result-tag strong { font-size:1rem; color:var(--brand); }
+    .scan-contractors { display:none; max-width:600px; margin:28px auto 0; flex-direction:column; gap:18px; animation:msgIn .4s ease; }
+    .scan-contractors.is-visible { display:flex; }
+    .scan-contractors-header h3 { font-size:1.1rem; font-weight:700; color:var(--ink); margin:0; display:flex; align-items:center; gap:8px; }
+    .scan-contractors-header h3 i { color:var(--brand); }
+    .scan-location-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .scan-location-btn {
+        display:inline-flex; align-items:center; gap:8px; padding:10px 18px;
+        border-radius:24px; border:1px solid var(--brand); background:transparent;
+        color:var(--brand); font-size:.88rem; font-weight:600;
+        font-family:'Manrope',sans-serif; cursor:pointer; transition:all .2s;
+    }
+    .scan-location-btn:hover { background:var(--brand); color:#fff; }
+    .scan-location-btn.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+    .scan-city-select {
+        padding:10px 16px; border-radius:24px; border:1px solid var(--line);
+        background:var(--bg); color:var(--ink); font-family:'Manrope',sans-serif;
+        font-size:.88rem; cursor:pointer; outline:none;
+    }
+    .scan-city-select:focus { border-color:var(--brand); }
+    .scan-contractor-list { display:flex; flex-direction:column; gap:12px; }
+    .scan-contractor-card {
+        background:var(--surface-strong); border:1px solid var(--line); border-radius:var(--radius-md);
+        padding:18px 20px; display:flex; align-items:center; gap:16px;
+        transition:border-color .2s,box-shadow .2s;
+    }
+    .scan-contractor-card:hover { border-color:var(--brand); box-shadow:0 4px 20px rgba(255,102,0,.1); }
+    .scan-contractor-info { flex:1; min-width:0; }
+    .scan-contractor-name { font-weight:700; font-size:1rem; color:var(--ink); margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+    .scan-contractor-avail { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    .scan-contractor-avail.green { background:#22c55e; }
+    .scan-contractor-avail.yellow { background:#f59e0b; }
+    .scan-contractor-avail.red { background:#ef4444; }
+    .scan-contractor-meta { font-size:.82rem; color:var(--muted); display:flex; gap:14px; flex-wrap:wrap; }
+    .scan-contractor-meta i { color:var(--brand); margin-right:4px; }
+    .scan-contractor-price { font-size:.85rem; font-weight:700; color:var(--brand); margin-top:4px; }
+    .scan-contractor-distance { font-size:.78rem; color:var(--muted); margin-top:2px; }
+    .scan-contractor-actions { display:flex; flex-direction:column; gap:8px; flex-shrink:0; }
+    .scan-call-btn {
+        display:inline-flex; align-items:center; justify-content:center; gap:6px;
+        padding:10px 20px; border-radius:24px; border:none; background:#22c55e; color:#fff;
+        font-size:.85rem; font-weight:700; font-family:'Manrope',sans-serif;
+        cursor:pointer; transition:background .2s,transform .15s; text-decoration:none; white-space:nowrap;
+    }
+    .scan-call-btn:hover { background:#16a34a; transform:scale(1.03); }
+    .scan-view-btn {
+        display:inline-flex; align-items:center; justify-content:center; gap:6px;
+        padding:8px 16px; border-radius:24px; border:1px solid var(--line); background:transparent;
+        color:var(--muted); font-size:.8rem; font-weight:600; font-family:'Manrope',sans-serif;
+        cursor:pointer; transition:all .2s; text-decoration:none;
+    }
+    .scan-view-btn:hover { border-color:var(--brand); color:var(--brand); }
+    .scan-no-results { text-align:center; padding:30px; color:var(--muted); font-size:.95rem; }
+    .scan-no-results i { font-size:2rem; display:block; margin-bottom:10px; color:var(--line-strong); }
+    .scan-all-btn {
+        display:block; text-align:center; padding:14px; border-radius:var(--radius-md);
+        border:1px dashed var(--line-strong); color:var(--brand); font-weight:700; font-size:.95rem;
+        text-decoration:none; transition:all .2s;
+    }
+    .scan-all-btn:hover { background:var(--accent-soft); border-style:solid; }
+    .scan-all-btn i { margin-right:6px; }
+    @media (max-width:640px) {
+        .scan-flow { margin:0 -8px; }
+        .scan-photo-card img { max-height:240px; }
+        .scan-chat-messages { max-height:280px; padding:14px; }
+        .scan-result,.scan-contractors { margin-left:-8px; margin-right:-8px; }
+        .scan-contractor-card { flex-direction:column; align-items:stretch; }
+        .scan-contractor-actions { flex-direction:row; }
+        .scan-result-tags { flex-direction:column; }
+    }
+    </style>
+</head>
+<body>
+    <div class="site-shell">
+        <nav class="navbar" id="navbar">
+            <div class="container nav-container">
+                <a href="index.html#home" class="logo">nail<span>it</span></a>
+                <ul class="nav-links" id="navLinks">
+                    <li><a href="index.html#services"><i class="fas fa-th-large"></i> Kategorien</a></li>
+                    <li><a href="contractors.html"><i class="fas fa-building"></i> Betriebe</a></li>
+                    <li><a href="index.html#for-contractors"><i class="fas fa-hard-hat"></i> Für Betriebe</a></li>
+                    <li><a href="index.html#support"><i class="fas fa-headset"></i> Support</a></li>
+                </ul>
+                <div class="nav-auth">
+                    <button type="button" class="theme-toggle" id="themeToggle" aria-label="Dark Mode umschalten">
+                        <i class="fas fa-moon" id="themeIcon"></i>
+                    </button>
+                </div>
+                <div class="hamburger" id="hamburger" aria-label="Navigation umschalten" aria-expanded="false" role="button" tabindex="0">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+        </nav>
+        <main class="analysis-page">
+            <div class="container">
+                <a href="index.html" class="directory-back-link"><i class="fas fa-arrow-left"></i> Zurück zur Startseite</a>
+                <div class="scan-flow">
+                    <div class="scan-photo-card">
+                        <img id="scanPhoto" src="" alt="Dein Foto">
+                        <div class="scan-photo-badge"><i class="fas fa-camera"></i> Nailit Scanner</div>
+                    </div>
+                    <div class="scan-chat">
+                        <div class="scan-chat-messages" id="chatMessages">
+                            <div class="scan-msg scan-msg-bot">
+                                <div class="scan-msg-avatar"><i class="fas fa-robot"></i></div>
+                                <div class="scan-msg-bubble">Ich sehe dein Foto! Beschreibe kurz was das Problem ist, damit ich dir den passenden Handwerker empfehlen kann.</div>
+                            </div>
+                        </div>
+                        <form class="scan-chat-input" id="chatForm">
+                            <input type="text" id="chatInput" placeholder="Beschreibe dein Problem…" autocomplete="off" autofocus>
+                            <button type="submit" id="chatSendBtn"><i class="fas fa-paper-plane"></i></button>
+                        </form>
+                    </div>
+                </div>
+                <div class="scan-result" id="scanResult">
+                    <div class="scan-result-card">
+                        <div class="scan-result-header">
+                            <i class="fas fa-clipboard-check"></i>
+                            <h3 id="resultTitle">Analyse</h3>
+                        </div>
+                        <p class="scan-result-summary" id="resultSummary"></p>
+                        <div class="scan-result-tags">
+                            <div class="scan-result-tag"><span>Gewerk</span><strong id="resultTrade">-</strong></div>
+                            <div class="scan-result-tag"><span>Priorität</span><strong id="resultPriority">-</strong></div>
+                            <div class="scan-result-tag"><span>Sicherheit</span><strong id="resultConfidence">-</strong></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="scan-contractors" id="scanContractors">
+                    <div class="scan-contractors-header">
+                        <h3><i class="fas fa-building"></i> Passende Betriebe</h3>
+                    </div>
+                    <div class="scan-location-row">
+                        <button type="button" class="scan-location-btn" id="locationBtn">
+                            <i class="fas fa-location-crosshairs"></i> Standort aktivieren
+                        </button>
+                        <select class="scan-city-select" id="citySelect">
+                            <option value="">Stadt wählen…</option>
+                            <option>Berlin</option><option>Hamburg</option><option>München</option>
+                            <option>Köln</option><option>Frankfurt</option><option>Düsseldorf</option>
+                            <option>Stuttgart</option><option>Leipzig</option><option>Dresden</option>
+                            <option>Nürnberg</option><option>Hannover</option><option>Dortmund</option>
+                            <option>Essen</option><option>Bremen</option><option>Duisburg</option>
+                            <option>Bonn</option><option>Münster</option><option>Mannheim</option>
+                            <option>Karlsruhe</option><option>Augsburg</option><option>Kiel</option>
+                            <option>Rostock</option><option>Erfurt</option><option>Mainz</option>
+                            <option>Saarbrücken</option><option>Potsdam</option><option>Freiburg</option>
+                            <option>Regensburg</option><option>Magdeburg</option><option>Bielefeld</option>
+                            <option>Wuppertal</option><option>Lübeck</option><option>Wiesbaden</option>
+                            <option>Bochum</option>
+                        </select>
+                    </div>
+                    <div class="scan-contractor-list" id="contractorList"></div>
+                    <a href="contractors.html" class="scan-all-btn" id="allContractorsLink">
+                        <i class="fas fa-arrow-right"></i> Alle Betriebe anzeigen
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+    (function() {
+        var businesses = [
+            { name:'Meyer Sanitair Notdienst', trade:'sanitär', lat:52.520, lng:13.405, avail:'green', desc:'Rohrleck, Feuchtigkeit, Bad', city:'Berlin', priceFrom:89, priceTo:320, phone:'+4930123456' },
+            { name:'AquaFix Haustechnik', trade:'sanitär', lat:52.5388, lng:13.4244, avail:'yellow', desc:'Leitungen und Armaturen', city:'Berlin', priceFrom:75, priceTo:280, phone:'+4930234567' },
+            { name:'Klarfluss Service', trade:'sanitär', lat:52.5163, lng:13.4541, avail:'red', desc:'Abfluss und Wasserschaden', city:'Berlin', priceFrom:95, priceTo:450, phone:'+4930345678' },
+            { name:'RohrBlitz 24h', trade:'sanitär', lat:52.492, lng:13.361, avail:'green', desc:'Notdienst Rohrbruch, 24h', city:'Berlin', priceFrom:119, priceTo:380, phone:'+4930456789' },
+            { name:'WasserWerk Installationen', trade:'sanitär', lat:52.551, lng:13.447, avail:'yellow', desc:'Badsanierung und Heizung', city:'Berlin', priceFrom:150, priceTo:2800, phone:'+4930567890' },
+            { name:'Norddach Meisterbetrieb', trade:'dach', lat:52.5346, lng:13.1988, avail:'green', desc:'Undichte Dächer, Sturmschäden', city:'Berlin', priceFrom:250, priceTo:4500, phone:'+4930678901' },
+            { name:'Dachwacht Berlin', trade:'dach', lat:52.4679, lng:13.3855, avail:'red', desc:'Leckageortung und Reparatur', city:'Berlin', priceFrom:180, priceTo:1200, phone:'+4930789012' },
+            { name:'FirstRoof Solutions', trade:'dach', lat:52.4812, lng:13.435, avail:'yellow', desc:'Flachdach und Abdichtung', city:'Berlin', priceFrom:220, priceTo:3800, phone:'+4930890123' },
+            { name:'Berliner Dachprofis', trade:'dach', lat:52.544, lng:13.35, avail:'green', desc:'Dachstuhl, Gaube, Dämmung', city:'Berlin', priceFrom:300, priceTo:5500, phone:'+4930901234' },
+            { name:'Voltwerk Elektroservice', trade:'elektro', lat:52.5488, lng:13.3594, avail:'green', desc:'Kurzschluss und Ausfall', city:'Berlin', priceFrom:65, priceTo:280, phone:'+4930012345' },
+            { name:'Lichtpunkt Technik', trade:'elektro', lat:52.5161, lng:13.304, avail:'yellow', desc:'Sicherungskasten, Leitungen', city:'Berlin', priceFrom:80, priceTo:420, phone:'+4930112233' },
+            { name:'Elektro Urban', trade:'elektro', lat:52.499, lng:13.403, avail:'red', desc:'Haus- und Wohnungsinstallation', city:'Berlin', priceFrom:70, priceTo:350, phone:'+4930223344' },
+            { name:'StromFix Berlin', trade:'elektro', lat:52.506, lng:13.327, avail:'green', desc:'Steckdosen, Sicherungen, Wallbox', city:'Berlin', priceFrom:55, priceTo:1800, phone:'+4930334455' },
+            { name:'Raumfarbe Pro', trade:'maler', lat:52.4569, lng:13.3174, avail:'red', desc:'Wand, Decke, Feuchtigkeitsfolgen', city:'Berlin', priceFrom:45, priceTo:180, phone:'+4930445566' },
+            { name:'Malerteam Weiss', trade:'maler', lat:52.522, lng:13.41, avail:'yellow', desc:'Innenanstrich und Sanierung', city:'Berlin', priceFrom:40, priceTo:220, phone:'+4930556677' },
+            { name:'Renovio Innenausbau', trade:'maler', lat:52.5145, lng:13.4756, avail:'red', desc:'Wand- und Oberflächensanierung', city:'Berlin', priceFrom:55, priceTo:350, phone:'+4930667788' },
+            { name:'FarbKunst Berlin', trade:'maler', lat:52.535, lng:13.415, avail:'green', desc:'Fassade, Tapete, Spachteltechnik', city:'Berlin', priceFrom:50, priceTo:280, phone:'+4930778899' },
+            { name:'Haushelden Service', trade:'allround', lat:52.51, lng:13.389, avail:'green', desc:'Koordination mehrerer Gewerke', city:'Berlin', priceFrom:45, priceTo:150, phone:'+4930889900' },
+            { name:'Fixwerk Objektservice', trade:'allround', lat:52.53, lng:13.42, avail:'red', desc:'Allround-Reparaturen', city:'Berlin', priceFrom:55, priceTo:190, phone:'+4930990011' },
+            { name:'Projektbau 360', trade:'allround', lat:52.505, lng:13.45, avail:'red', desc:'Komplexe Problemfälle', city:'Berlin', priceFrom:120, priceTo:480, phone:'+4930001122' },
+            { name:'HausDoktor Berlin', trade:'allround', lat:52.487, lng:13.431, avail:'green', desc:'Kleinreparaturen aller Art', city:'Berlin', priceFrom:39, priceTo:120, phone:'+4930112200' },
+            { name:'Elbe Sanitär GmbH', trade:'sanitär', lat:53.5511, lng:9.9937, avail:'green', desc:'Notdienst und Badsanierung', city:'Hamburg', priceFrom:95, priceTo:380, phone:'+4940123456' },
+            { name:'Nordlicht Elektro', trade:'elektro', lat:53.5653, lng:9.9629, avail:'yellow', desc:'Smart Home und Elektrik', city:'Hamburg', priceFrom:75, priceTo:520, phone:'+4940234567' },
+            { name:'Hanseatic Dachbau', trade:'dach', lat:53.5544, lng:10.009, avail:'green', desc:'Sturmschäden und Flachdach', city:'Hamburg', priceFrom:280, priceTo:4200, phone:'+4940345678' },
+            { name:'Farbenhaus Hamburg', trade:'maler', lat:53.5488, lng:9.9872, avail:'red', desc:'Fassade und Innenbereich', city:'Hamburg', priceFrom:42, priceTo:240, phone:'+4940456789' },
+            { name:'Alster Handwerk', trade:'allround', lat:53.5563, lng:10.023, avail:'green', desc:'Montage, Reparatur, Umzug', city:'Hamburg', priceFrom:49, priceTo:160, phone:'+4940567890' },
+            { name:'Isar Sanitärtechnik', trade:'sanitär', lat:48.1351, lng:11.582, avail:'green', desc:'Heizung, Bad, Wasserschaden', city:'München', priceFrom:105, priceTo:420, phone:'+498912345' },
+            { name:'AlpenStrom München', trade:'elektro', lat:48.148, lng:11.5674, avail:'yellow', desc:'Gebäudeelektrik und PV-Anlagen', city:'München', priceFrom:85, priceTo:2200, phone:'+498923456' },
+            { name:'Bayerndach Meister', trade:'dach', lat:48.123, lng:11.595, avail:'green', desc:'Steildach, Rinne, Schneeschutz', city:'München', priceFrom:320, priceTo:5800, phone:'+498934567' },
+            { name:'Pinselstrich München', trade:'maler', lat:48.1395, lng:11.549, avail:'yellow', desc:'Altbausanierung und Stuck', city:'München', priceFrom:52, priceTo:300, phone:'+498945678' },
+            { name:'MünchenFix Allround', trade:'allround', lat:48.156, lng:11.578, avail:'green', desc:'Komplettservice Haus/Wohnung', city:'München', priceFrom:45, priceTo:180, phone:'+498956789' },
+            { name:'Dom Sanitär Köln', trade:'sanitär', lat:50.9375, lng:6.9603, avail:'green', desc:'Rohr, Heizung, Notdienst', city:'Köln', priceFrom:89, priceTo:350, phone:'+4922112345' },
+            { name:'RheinElektro', trade:'elektro', lat:50.9413, lng:6.9582, avail:'green', desc:'Hausanschluss und Beleuchtung', city:'Köln', priceFrom:72, priceTo:380, phone:'+4922123456' },
+            { name:'Kölner Dachwerk', trade:'dach', lat:50.929, lng:6.942, avail:'yellow', desc:'Dachsanierung und Gauben', city:'Köln', priceFrom:260, priceTo:3600, phone:'+4922134567' },
+            { name:'Farbmeister Köln', trade:'maler', lat:50.948, lng:6.953, avail:'red', desc:'Malerarbeiten innen und außen', city:'Köln', priceFrom:38, priceTo:210, phone:'+4922145678' },
+            { name:'MainWasser Technik', trade:'sanitär', lat:50.1109, lng:8.6821, avail:'yellow', desc:'Heizungsbau und Sanitär', city:'Frankfurt', priceFrom:98, priceTo:380, phone:'+496912345' },
+            { name:'Skyline Elektrik', trade:'elektro', lat:50.1155, lng:8.6724, avail:'green', desc:'Gewerbe- und Privatinstallation', city:'Frankfurt', priceFrom:80, priceTo:450, phone:'+496923456' },
+            { name:'Taunus Dachbau', trade:'dach', lat:50.102, lng:8.695, avail:'green', desc:'Eternit, Ziegel, Blechdach', city:'Frankfurt', priceFrom:240, priceTo:4100, phone:'+496934567' },
+            { name:'Hessen Maler Service', trade:'maler', lat:50.123, lng:8.662, avail:'yellow', desc:'Tapezieren, Lackieren, Boden', city:'Frankfurt', priceFrom:44, priceTo:260, phone:'+496945678' },
+            { name:'Rhein-Ruhr Sanitär', trade:'sanitär', lat:51.2277, lng:6.7735, avail:'green', desc:'Sanitär-Komplettservice', city:'Düsseldorf', priceFrom:85, priceTo:340, phone:'+4921112345' },
+            { name:'NRW Elektrofix', trade:'elektro', lat:51.233, lng:6.783, avail:'yellow', desc:'E-Mobilität und Haussicherung', city:'Düsseldorf', priceFrom:78, priceTo:1600, phone:'+4921123456' },
+            { name:'Düssel Dach und Fassade', trade:'dach', lat:51.221, lng:6.768, avail:'green', desc:'Flachdach und Fassadensanierung', city:'Düsseldorf', priceFrom:290, priceTo:4800, phone:'+4921134567' },
+            { name:'Schwabenrohr GmbH', trade:'sanitär', lat:48.7758, lng:9.1829, avail:'green', desc:'Bad, Heizung, Gasinstallation', city:'Stuttgart', priceFrom:92, priceTo:360, phone:'+4971112345' },
+            { name:'Kessler Elektrotechnik', trade:'elektro', lat:48.769, lng:9.172, avail:'green', desc:'Altbau-Elektrik und KNX', city:'Stuttgart', priceFrom:82, priceTo:580, phone:'+4971123456' },
+            { name:'Schwäbische Dachprofis', trade:'dach', lat:48.783, lng:9.19, avail:'yellow', desc:'Dachfenster und Wärmedämmung', city:'Stuttgart', priceFrom:310, priceTo:5200, phone:'+4971134567' },
+            { name:'Neckar Maler Profis', trade:'maler', lat:48.772, lng:9.168, avail:'green', desc:'Fassade, WDVS, Innenanstrich', city:'Stuttgart', priceFrom:48, priceTo:280, phone:'+4971145678' },
+            { name:'SachsenSanitär', trade:'sanitär', lat:51.3397, lng:12.3731, avail:'green', desc:'Badsanierung und Altbau', city:'Leipzig', priceFrom:82, priceTo:310, phone:'+4934112345' },
+            { name:'Leipziger Strom', trade:'elektro', lat:51.344, lng:12.38, avail:'green', desc:'Altbau-Modernisierung', city:'Leipzig', priceFrom:65, priceTo:340, phone:'+4934123456' },
+            { name:'Sachsen Dachdeckerei', trade:'dach', lat:51.335, lng:12.365, avail:'yellow', desc:'Ziegel und Schieferdach', city:'Leipzig', priceFrom:230, priceTo:3400, phone:'+4934134567' },
+            { name:'Elbestadt Sanitär', trade:'sanitär', lat:51.0504, lng:13.7373, avail:'green', desc:'Wärmepumpe und Heizung', city:'Dresden', priceFrom:88, priceTo:350, phone:'+4935112345' },
+            { name:'Dresdner Dachwerk', trade:'dach', lat:51.058, lng:13.745, avail:'yellow', desc:'Denkmalpflege und Schieferdach', city:'Dresden', priceFrom:280, priceTo:4600, phone:'+4935123456' },
+            { name:'Semper Elektrik', trade:'elektro', lat:51.047, lng:13.732, avail:'green', desc:'PV-Anlagen und Smart Home', city:'Dresden', priceFrom:78, priceTo:1900, phone:'+4935134567' },
+            { name:'Franken Sanitär', trade:'sanitär', lat:49.4521, lng:11.0767, avail:'green', desc:'Rohrinstallation und Bad', city:'Nürnberg', priceFrom:85, priceTo:330, phone:'+4991112345' },
+            { name:'Burgstadt Elektrik', trade:'elektro', lat:49.448, lng:11.083, avail:'green', desc:'Gebäudetechnik und Beleuchtung', city:'Nürnberg', priceFrom:70, priceTo:380, phone:'+4991123456' },
+            { name:'Franken Dach Meister', trade:'dach', lat:49.455, lng:11.07, avail:'yellow', desc:'Steildach und Blechverkleidung', city:'Nürnberg', priceFrom:260, priceTo:3800, phone:'+4991134567' },
+            { name:'Niedersachsen Sanitär', trade:'sanitär', lat:52.3759, lng:9.732, avail:'green', desc:'Heizkörper und Rohrleitungen', city:'Hannover', priceFrom:88, priceTo:340, phone:'+4951112345' },
+            { name:'Expo Elektrik', trade:'elektro', lat:52.38, lng:9.745, avail:'yellow', desc:'Gebäudeautomation und Alarm', city:'Hannover', priceFrom:75, priceTo:480, phone:'+4951123456' },
+            { name:'Leine Dachbau', trade:'dach', lat:52.37, lng:9.72, avail:'green', desc:'Dachsanierung Altbau', city:'Hannover', priceFrom:250, priceTo:4000, phone:'+4951134567' },
+            { name:'Ruhrgebiet Sanitär', trade:'sanitär', lat:51.5136, lng:7.4653, avail:'green', desc:'24h Notdienst, Heizung', city:'Dortmund', priceFrom:89, priceTo:360, phone:'+4923112345' },
+            { name:'Signal Elektrik', trade:'elektro', lat:51.517, lng:7.472, avail:'green', desc:'Photovoltaik und Hauselektrik', city:'Dortmund', priceFrom:72, priceTo:2100, phone:'+4923123456' },
+            { name:'Westfalen Dach', trade:'dach', lat:51.508, lng:7.458, avail:'yellow', desc:'Sturmschaden und Neubau', city:'Dortmund', priceFrom:270, priceTo:4400, phone:'+4923134567' },
+            { name:'Gruga Sanitär', trade:'sanitär', lat:51.4556, lng:7.0116, avail:'green', desc:'Wasser und Wärmetechnik', city:'Essen', priceFrom:86, priceTo:320, phone:'+4920112345' },
+            { name:'Essener Elektro Service', trade:'elektro', lat:51.46, lng:7.018, avail:'yellow', desc:'Energieberatung und Installation', city:'Essen', priceFrom:78, priceTo:420, phone:'+4920123456' },
+            { name:'Weser Sanitär', trade:'sanitär', lat:53.0793, lng:8.8017, avail:'green', desc:'Bad und Heizungstechnik', city:'Bremen', priceFrom:84, priceTo:310, phone:'+4942112345' },
+            { name:'Hanse Elektrotechnik', trade:'elektro', lat:53.083, lng:8.811, avail:'green', desc:'Privat und Gewerbe', city:'Bremen', priceFrom:68, priceTo:350, phone:'+4942123456' },
+            { name:'Bremer Dachprofis', trade:'dach', lat:53.075, lng:8.795, avail:'yellow', desc:'Flachdach und Reetdach', city:'Bremen', priceFrom:280, priceTo:5000, phone:'+4942134567' },
+            { name:'Beethoven Sanitär', trade:'sanitär', lat:50.7374, lng:7.0982, avail:'green', desc:'Heizung und Sanitär', city:'Bonn', priceFrom:90, priceTo:350, phone:'+4922812345' },
+            { name:'Rheinblick Maler', trade:'maler', lat:50.74, lng:7.105, avail:'yellow', desc:'Altbausanierung und Fassade', city:'Bonn', priceFrom:42, priceTo:250, phone:'+4922823456' },
+            { name:'Westfalen Wasser GmbH', trade:'sanitär', lat:51.9607, lng:7.6261, avail:'green', desc:'Heizung, Bad, Thermie', city:'Münster', priceFrom:88, priceTo:380, phone:'+4925112345' },
+            { name:'Dom Elektrik Münster', trade:'elektro', lat:51.964, lng:7.632, avail:'green', desc:'Wallbox und Gebäudetechnik', city:'Münster', priceFrom:74, priceTo:1800, phone:'+4925123456' },
+            { name:'Kurpfalz Sanitär', trade:'sanitär', lat:49.4875, lng:8.4661, avail:'green', desc:'Bad und Heizungstechnik', city:'Mannheim', priceFrom:85, priceTo:320, phone:'+4962112345' },
+            { name:'Schwarzwald Sanitär', trade:'sanitär', lat:47.999, lng:7.842, avail:'green', desc:'Solar-Heizung und Bad', city:'Freiburg', priceFrom:95, priceTo:380, phone:'+4976112345' },
+            { name:'Breisgau Dach', trade:'dach', lat:48.005, lng:7.85, avail:'green', desc:'Solardach und Dämmung', city:'Freiburg', priceFrom:320, priceTo:6200, phone:'+4976123456' },
+            { name:'Donau Sanitär', trade:'sanitär', lat:49.0134, lng:12.1016, avail:'green', desc:'Wassertechnik und Heizung', city:'Regensburg', priceFrom:84, priceTo:320, phone:'+4994112345' },
+            { name:'Oberpfalz Elektro', trade:'elektro', lat:49.018, lng:12.108, avail:'yellow', desc:'E-Mobilität und Gebäudetechnik', city:'Regensburg', priceFrom:72, priceTo:1600, phone:'+4994123456' },
+        ];
+
+        var imageDataUrl = sessionStorage.getItem('nailit-scan-image');
+        var chatHistory = [];
+        var analysisResult = null;
+        var userLat = null, userLng = null;
+        var selectedCity = '';
+
+        var scanPhoto = document.getElementById('scanPhoto');
+        if (imageDataUrl && scanPhoto) scanPhoto.src = imageDataUrl;
+
+        var chatMessages = document.getElementById('chatMessages');
+        var chatForm = document.getElementById('chatForm');
+        var chatInput = document.getElementById('chatInput');
+        var chatSendBtn = document.getElementById('chatSendBtn');
+
+        function addMsg(text, type) {
+            var d = document.createElement('div');
+            d.className = 'scan-msg scan-msg-' + type;
+            d.innerHTML = '<div class="scan-msg-avatar"><i class="fas fa-' + (type==='bot'?'robot':'user') + '"></i></div>'
+                + '<div class="scan-msg-bubble">' + text + '</div>';
+            chatMessages.appendChild(d);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        function showTyping() {
+            var d = document.createElement('div');
+            d.className = 'scan-msg scan-msg-bot scan-msg-typing';
+            d.innerHTML = '<div class="scan-msg-avatar"><i class="fas fa-robot"></i></div>'
+                + '<div class="scan-msg-bubble"><div class="scan-typing"><span></span><span></span><span></span></div></div>';
+            chatMessages.appendChild(d);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        function removeTyping() {
+            var t = chatMessages.querySelector('.scan-msg-typing');
+            if (t) t.remove();
+        }
+
+        function getDistanceKm(lat1, lng1, lat2, lng2) {
+            var R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+            var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+        function getAnfahrt(km) {
+            if (km<=5) return 0; if (km<=10) return 15; if (km<=15) return 25;
+            if (km<=25) return 39; if (km<=50) return 59; return 79;
+        }
+        var tradeLabels = { 'sanitär':'Sanitär','elektro':'Elektro','dach':'Dachdecker','maler':'Maler','allround':'Allround' };
+
+        function renderContractors() {
+            if (!analysisResult) return;
+            var trade = analysisResult.trade || '';
+            var list = document.getElementById('contractorList');
+            list.innerHTML = '';
+
+            var filtered = businesses.filter(function(b) { return b.trade===trade; });
+            if (selectedCity) filtered = filtered.filter(function(b) { return b.city===selectedCity; });
+
+            if (userLat !== null) {
+                filtered.forEach(function(b) { b._dist = getDistanceKm(userLat, userLng, b.lat, b.lng); });
+                filtered.sort(function(a,b) { return a._dist - b._dist; });
+            } else {
+                var order = {green:0,yellow:1,red:2};
+                filtered.sort(function(a,b) { return (order[a.avail]||2)-(order[b.avail]||2); });
+            }
+
+            if (!filtered.length) {
+                list.innerHTML = '<div class="scan-no-results"><i class="fas fa-search"></i>Keine Betriebe gefunden. Wähle eine andere Stadt oder zeige alle an.</div>';
+                return;
+            }
+
+            filtered.forEach(function(b) {
+                var card = document.createElement('div');
+                card.className = 'scan-contractor-card';
+                var distHtml = '';
+                if (b._dist !== undefined) {
+                    var km = Math.round(b._dist*10)/10, anfahrt = getAnfahrt(km);
+                    distHtml = '<div class="scan-contractor-distance"><i class="fas fa-route"></i> '
+                        + km + ' km - Anfahrt: ' + (anfahrt===0 ? '<strong style="color:#22c55e">Kostenlos</strong>' : anfahrt+' €') + '</div>';
+                }
+                card.innerHTML = '<div class="scan-contractor-info">'
+                    + '<p class="scan-contractor-name"><span class="scan-contractor-avail '+b.avail+'"></span>'+b.name+'</p>'
+                    + '<div class="scan-contractor-meta"><span><i class="fas fa-map-marker-alt"></i>'+b.city+'</span><span><i class="fas fa-wrench"></i>'+b.desc+'</span></div>'
+                    + '<div class="scan-contractor-price"><i class="fas fa-tag"></i> ab '+b.priceFrom+' € - '+b.priceTo+' €</div>'
+                    + distHtml + '</div>'
+                    + '<div class="scan-contractor-actions">'
+                    + '<a href="tel:'+b.phone+'" class="scan-call-btn"><i class="fas fa-phone"></i> Anrufen</a>'
+                    + '<a href="contractors.html?q='+encodeURIComponent(b.name)+'" class="scan-view-btn"><i class="fas fa-arrow-right"></i> Details</a>'
+                    + '</div>';
+                list.appendChild(card);
+            });
+            document.getElementById('allContractorsLink').href = 'contractors.html?trade=' + encodeURIComponent(trade);
+        }
+
+        function showResults(data) {
+            analysisResult = data;
+            document.getElementById('resultTitle').textContent = data.title || 'Analyse abgeschlossen';
+            document.getElementById('resultSummary').textContent = data.summary || '';
+            document.getElementById('resultTrade').textContent = tradeLabels[data.trade] || data.trade || '-';
+            document.getElementById('resultPriority').textContent = data.priority || '-';
+            document.getElementById('resultConfidence').textContent = data.confidence || '-';
+            document.getElementById('scanResult').classList.add('is-visible');
+            document.getElementById('scanContractors').classList.add('is-visible');
+            renderContractors();
+            setTimeout(function() {
+                document.getElementById('scanResult').scrollIntoView({ behavior:'smooth', block:'start' });
+            }, 100);
+        }
+
+        async function runAnalysis(description) {
+            showTyping();
+            try {
+                var payload = { description: description || 'Bitte analysiere dieses Foto.', location:'', propertyType:'', urgency:'mittel', imageDataUrl: imageDataUrl };
+                var response = await fetch('/api/analyze', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+                removeTyping();
+                if (!response.ok) { var err = await response.json().catch(function(){return{};}); throw new Error(err.error||'Analyse fehlgeschlagen'); }
+                var result = await response.json();
+                chatHistory.push({ role:'assistant', content: result.title+': '+result.summary });
+                var tradeLabel = tradeLabels[result.trade] || result.trade;
+                addMsg('<strong>Analyse: '+result.title+'</strong><br><br>'+result.summary+'<br><br><strong>Du brauchst: '+tradeLabel+'</strong><br>Priorität: '+result.priority+' | Sicherheit: '+result.confidence, 'bot');
+                showResults(result);
+                chatInput.placeholder = 'Folgefrage stellen...';
+            } catch(err) {
+                removeTyping();
+                addMsg('Fehler: '+err.message, 'bot');
+            }
+        }
+
+        async function sendFollowUp(message) {
+            chatHistory.push({ role:'user', content:message });
+            showTyping();
+            try {
+                var response = await fetch('/api/analysis-chat', { method:'POST', headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({ messages:chatHistory, context:analysisResult, imageDataUrl:imageDataUrl }) });
+                removeTyping();
+                if (!response.ok) throw new Error('Chat-Anfrage fehlgeschlagen');
+                var data = await response.json();
+                var reply = data.reply || 'Entschuldigung, keine Antwort möglich.';
+                chatHistory.push({ role:'assistant', content:reply });
+                addMsg(reply.replace(/\n/g,'<br>'), 'bot');
+            } catch(err) { removeTyping(); addMsg('Fehler: '+err.message, 'bot'); }
+        }
+
+        var firstMessage = true;
+        if (chatForm) {
+            chatForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var msg = chatInput.value.trim();
+                if (!msg) return;
+                addMsg(msg, 'user');
+                chatInput.value = '';
+                if (firstMessage) { firstMessage = false; chatHistory.push({role:'user',content:msg}); runAnalysis(msg); }
+                else { sendFollowUp(msg); }
+            });
+        }
+
+        if (!imageDataUrl) {
+            document.querySelector('.scan-photo-card').style.display = 'none';
+            document.querySelector('.scan-chat .scan-msg-bubble').innerHTML = 'Kein Foto gefunden. Kein Problem! Beschreibe einfach dein Problem und ich helfe dir.';
+        }
+
+        var locationBtn = document.getElementById('locationBtn');
+        if (locationBtn) {
+            locationBtn.addEventListener('click', function() {
+                if (userLat !== null) { userLat=null; userLng=null; locationBtn.classList.remove('active'); locationBtn.innerHTML='<i class="fas fa-location-crosshairs"></i> Standort aktivieren'; renderContractors(); return; }
+                locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Suche...';
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+                    locationBtn.classList.add('active'); locationBtn.innerHTML='<i class="fas fa-location-dot"></i> Standort aktiv';
+                    renderContractors();
+                }, function() {
+                    locationBtn.innerHTML='<i class="fas fa-location-crosshairs"></i> Nicht verfügbar';
+                    setTimeout(function(){ locationBtn.innerHTML='<i class="fas fa-location-crosshairs"></i> Standort aktivieren'; },2000);
+                }, {enableHighAccuracy:true, timeout:8000});
+            });
+        }
+
+        var citySelect = document.getElementById('citySelect');
+        if (citySelect) citySelect.addEventListener('change', function() { selectedCity=this.value; renderContractors(); });
+    })();
+
+    (function() {
+        var toggle=document.getElementById('themeToggle'), icon=document.getElementById('themeIcon'), html=document.documentElement;
+        if (localStorage.getItem('nailit-theme')==='dark') { html.setAttribute('data-theme','dark'); icon.classList.replace('fa-moon','fa-sun'); }
+        if (toggle) toggle.addEventListener('click', function() {
+            var isDark = html.getAttribute('data-theme')==='dark';
+            if (isDark) { html.removeAttribute('data-theme'); icon.classList.replace('fa-sun','fa-moon'); localStorage.setItem('nailit-theme','light'); }
+            else { html.setAttribute('data-theme','dark'); icon.classList.replace('fa-moon','fa-sun'); localStorage.setItem('nailit-theme','dark'); }
+        });
+    })();
+
+    (function() {
+        var h=document.getElementById('hamburger'), n=document.getElementById('navLinks');
+        if (h&&n) h.addEventListener('click', function() { n.classList.toggle('active'); h.classList.toggle('active'); });
+    })();
+    </script>
+</body>
+</html>
