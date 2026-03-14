@@ -633,7 +633,89 @@ app.post('/api/analyze', async (req, res) => {
     }
 });
 
-app.get('*', (_req, res) => {
+/* ── Analysis follow-up chat ── */
+app.post('/api/analysis-chat', async (req, res) => {
+    const { messages, context, imageDataUrl } = req.body || {};
+
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+        return res.status(400).json({ error: 'Keine Chat-Nachrichten uebermittelt.' });
+    }
+
+    if (!client) {
+        return res.status(503).json({
+            error: 'OPENAI_API_KEY fehlt. Lege eine .env mit OPENAI_API_KEY an und starte den Server neu.'
+        });
+    }
+
+    try {
+        const systemPrompt = [
+            'Du bist der Nailit KI-Assistent fuer eine deutsche Handwerker-Vermittlungsplattform.',
+            'Du hilfst Nutzern, ihren Schaden zu verstehen und den passenden Handwerker zu finden.',
+            'Antworte freundlich, hilfreich und auf Deutsch.',
+            'Halte Antworten praegnant (max 3-4 Saetze), ausser der Nutzer fragt nach Details.',
+            'Erlaubte Gewerke: Sanitaer, Dachdecker, Elektro, Maler, Allround.',
+        ];
+
+        if (context) {
+            systemPrompt.push(
+                'Bisherige Analyse: ' + JSON.stringify({
+                    title: context.title,
+                    summary: context.summary,
+                    trade: context.trade,
+                    priority: context.priority,
+                    confidence: context.confidence,
+                    tags: context.tags
+                })
+            );
+        }
+
+        const inputMessages = [
+            {
+                role: 'system',
+                content: [{ type: 'input_text', text: systemPrompt.join(' ') }]
+            }
+        ];
+
+        // Add first user message with image if available
+        let firstUserAdded = false;
+        for (const msg of messages) {
+            const content = [];
+
+            if (msg.role === 'user' && !firstUserAdded && imageDataUrl) {
+                content.push({ type: 'input_image', image_url: imageDataUrl });
+                firstUserAdded = true;
+            }
+
+            content.push({ type: 'input_text', text: msg.content });
+
+            inputMessages.push({
+                role: msg.role === 'user' ? 'user' : 'assistant',
+                content
+            });
+        }
+
+        const response = await client.responses.create({
+            model,
+            input: inputMessages
+        });
+
+        return res.json({ reply: response.output_text });
+
+    } catch (error) {
+        console.error('Analysis chat failed:', error);
+        return res.status(500).json({
+            error: 'Chat-Anfrage fehlgeschlagen. Bitte pruefe API-Key und Server-Logs.'
+        });
+    }
+});
+
+app.get('*', (req, res) => {
+    // Let static files (analysis.html, contractors.html, etc.) be served first
+    // This catch-all only handles unmatched routes for SPA fallback
+    const filePath = path.join(__dirname, req.path);
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+        return res.sendFile(filePath);
+    }
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 

@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <script>if(localStorage.getItem('nailit-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
 </head>
 <body>
     <div class="site-shell">
@@ -609,19 +610,16 @@
             });
         }
 
-        // Show preview for either input
+        // Show preview, then redirect to analysis page
         function handleFile(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    preview.classList.remove('is-hidden');
-                    // Copy file to heroPhotoInput so script.js can read it
-                    if (input !== photoInput) {
-                        const dt = new DataTransfer();
-                        dt.items.add(input.files[0]);
-                        photoInput.files = dt.files;
-                    }
+                    // Store image in sessionStorage and redirect
+                    sessionStorage.setItem('nailit-scan-image', e.target.result);
+                    sessionStorage.setItem('nailit-scan-description', '');
+                    sessionStorage.setItem('nailit-scan-urgency', 'mittel');
+                    window.location.href = 'analysis.html';
                 };
                 reader.readAsDataURL(input.files[0]);
             }
@@ -699,7 +697,7 @@
             });
         }
 
-        // Form submit → call /api/analyze
+        // Form submit → store data + redirect to analysis page
         if (form) {
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
@@ -711,51 +709,22 @@
                 var urgency = (document.getElementById('urgency') || {}).value || 'mittel';
 
                 // Loading state
-                submitBtn.textContent = 'Analysiert…';
+                submitBtn.textContent = 'Wird geladen…';
                 submitBtn.classList.add('is-loading');
 
                 try {
                     var imageDataUrl = await fileToBase64(mediaFile);
 
-                    var payload = {
-                        description: description || 'Bitte analysiere dieses Foto.',
-                        location: '',
-                        propertyType: '',
-                        urgency: urgency,
-                        imageDataUrl: imageDataUrl
-                    };
-
-                    var response = await fetch('/api/analyze', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        var errData = await response.json().catch(function() { return {}; });
-                        throw new Error(errData.error || 'Analyse fehlgeschlagen');
-                    }
-
-                    var result = await response.json();
-
-                    // Show result
-                    resultTitle.textContent = result.title || 'Analyse abgeschlossen';
-                    resultSummary.textContent = result.summary || '';
-                    resultTrade.textContent = result.trade || '–';
-                    resultPriority.textContent = result.priority || '–';
-                    resultConfidence.textContent = result.confidence || '–';
-                    resultPanel.classList.remove('is-hidden');
+                    // Store in sessionStorage and redirect
+                    sessionStorage.setItem('nailit-scan-image', imageDataUrl);
+                    sessionStorage.setItem('nailit-scan-description', description);
+                    sessionStorage.setItem('nailit-scan-urgency', urgency);
+                    window.location.href = 'analysis.html';
 
                 } catch (err) {
-                    resultTitle.textContent = 'Fehler bei der Analyse';
-                    resultSummary.textContent = err.message;
-                    resultTrade.textContent = '–';
-                    resultPriority.textContent = '–';
-                    resultConfidence.textContent = '–';
-                    resultPanel.classList.remove('is-hidden');
-                } finally {
                     submitBtn.innerHTML = '<i class="fas fa-bolt"></i> Analyse starten';
                     submitBtn.classList.remove('is-loading');
+                    alert('Fehler beim Laden des Fotos. Bitte erneut versuchen.');
                 }
             });
         }

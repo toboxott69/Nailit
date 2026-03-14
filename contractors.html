@@ -8,7 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="styles.css">
+    <script>if(localStorage.getItem('nailit-theme')==='dark')document.documentElement.setAttribute('data-theme','dark');</script>
 </head>
 <body>
     <div class="site-shell">
@@ -79,147 +81,99 @@
                             <select id="contractorCityFilter">
                                 <option value="">Alle Städte</option>
                                 <option value="berlin">Berlin</option>
+                                <option value="hamburg">Hamburg</option>
+                                <option value="münchen">München</option>
+                                <option value="köln">Köln</option>
+                                <option value="frankfurt">Frankfurt</option>
+                                <option value="stuttgart">Stuttgart</option>
+                                <option value="düsseldorf">Düsseldorf</option>
+                                <option value="dortmund">Dortmund</option>
+                                <option value="essen">Essen</option>
+                                <option value="leipzig">Leipzig</option>
+                                <option value="bremen">Bremen</option>
+                                <option value="dresden">Dresden</option>
+                                <option value="hannover">Hannover</option>
+                                <option value="nürnberg">Nürnberg</option>
+                                <option value="duisburg">Duisburg</option>
+                                <option value="bochum">Bochum</option>
+                                <option value="wuppertal">Wuppertal</option>
+                                <option value="bielefeld">Bielefeld</option>
+                                <option value="bonn">Bonn</option>
+                                <option value="münster">Münster</option>
+                                <option value="mannheim">Mannheim</option>
+                                <option value="karlsruhe">Karlsruhe</option>
+                                <option value="augsburg">Augsburg</option>
+                                <option value="wiesbaden">Wiesbaden</option>
+                                <option value="kiel">Kiel</option>
+                                <option value="rostock">Rostock</option>
+                                <option value="lübeck">Lübeck</option>
+                                <option value="erfurt">Erfurt</option>
+                                <option value="mainz">Mainz</option>
+                                <option value="saarbrücken">Saarbrücken</option>
+                                <option value="potsdam">Potsdam</option>
+                                <option value="freiburg">Freiburg</option>
+                                <option value="regensburg">Regensburg</option>
+                                <option value="magdeburg">Magdeburg</option>
                             </select>
                         </label>
                     </div>
                 </form>
                 <div class="contractor-search-meta">
-                    <p id="contractorResultCount">15 Betriebe gefunden</p>
+                    <p id="contractorResultCount">Betriebe in ganz Deutschland</p>
                     <button type="button" class="contractor-reset-btn" id="contractorResetButton">Filter zurücksetzen</button>
                 </div>
+
+                <!-- MAP SECTION -->
+                <div class="map-section">
+                    <div class="map-controls">
+                        <div class="map-control-row">
+                            <div class="map-address-field">
+                                <i class="fas fa-location-dot"></i>
+                                <input type="text" id="mapAddressInput" placeholder="Straße, PLZ oder Stadt eingeben…" autocomplete="off">
+                                <button type="button" class="map-locate-btn" id="mapLocateBtn" title="Meinen Standort verwenden">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                            </div>
+                            <div class="map-radius-field">
+                                <i class="fas fa-bullseye"></i>
+                                <select id="mapRadiusSelect">
+                                    <option value="5">5 km</option>
+                                    <option value="10" selected>10 km</option>
+                                    <option value="15">15 km</option>
+                                    <option value="25">25 km</option>
+                                    <option value="50">50 km</option>
+                                </select>
+                            </div>
+                            <div class="map-trade-field">
+                                <i class="fas fa-wrench"></i>
+                                <select id="mapTradeSelect">
+                                    <option value="">Alle Gewerke</option>
+                                    <option value="sanitär">Sanitär</option>
+                                    <option value="elektro">Elektro</option>
+                                    <option value="dach">Dach</option>
+                                    <option value="maler">Maler</option>
+                                    <option value="allround">Allround</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary map-search-btn" id="mapSearchBtn">
+                                <i class="fas fa-search"></i> Suchen
+                            </button>
+                        </div>
+                        <div class="map-address-suggestions is-hidden" id="mapAddressSuggestions"></div>
+                    </div>
+                    <div class="map-container" id="mapContainer">
+                        <div id="nailitMap" style="width:100%;height:100%;"></div>
+                    </div>
+                    <div class="map-legend">
+                        <span class="map-legend-item"><span class="map-dot is-green"></span> Sofort verfügbar</span>
+                        <span class="map-legend-item"><span class="map-dot is-yellow"></span> Später verfügbar</span>
+                        <span class="map-legend-item"><span class="map-dot is-red"></span> Heute nicht verfügbar</span>
+                        <span class="map-legend-item"><span class="map-dot is-blue"></span> Dein Standort</span>
+                    </div>
+                </div>
+
                 <div class="contractors-grid" id="contractorsGrid">
-                    <article class="contractor-card reveal delay-1" data-name="Meyer Sanitair Notdienst" data-trade="sanitär" data-city="berlin mitte" data-tags="sanitär sanitaer sanitair klempner installateur rohrleck feuchtigkeit bad berlin mitte 4 km heute verfügbar">
-                        <div class="contractor-header">
-                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
-                            <div>
-                                <h3>Meyer Sanitair Notdienst</h3>
-                                <div class="contractor-rating"><i class="fas fa-star"></i><span>98 Match</span></div>
-                            </div>
-                        </div>
-                        <p class="contractor-desc">Rohrleck, Feuchtigkeit, Bad</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Mitte</span><span><i class="fas fa-wrench"></i> Sanitär</span><span><i class="fas fa-route"></i> 4 km</span></div>
-                        <div class="availability-indicator is-green"><span class="availability-dot"></span><strong>Sofort verfügbar</strong><span>Heute verfügbar</span></div>
-                        <div class="contractor-actions">
-                            <a href="#" class="btn btn-secondary">Profil ansehen</a>
-                            <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Meyer Sanitair Notdienst" data-chat-city="Berlin Mitte" data-chat-trade="Sanitär"><i class="fas fa-comments"></i> Direkt chatten</button>
-                        </div>
-                    </article>
-                    <article class="contractor-card reveal delay-2" data-name="AquaFix Haustechnik" data-trade="sanitär" data-city="berlin prenzlauer berg" data-tags="sanitär sanitaer installateur wasser leitungen armaturen berlin prenzlauer berg 7 km 3 stunden">
-                        <div class="contractor-header">
-                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
-                            <div>
-                                <h3>AquaFix Haustechnik</h3>
-                                <div class="contractor-rating"><i class="fas fa-star"></i><span>94 Match</span></div>
-                            </div>
-                        </div>
-                        <p class="contractor-desc">Leitungen und Armaturen</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Prenzlauer Berg</span><span><i class="fas fa-wrench"></i> Sanitär</span><span><i class="fas fa-route"></i> 7 km</span></div>
-                        <div class="availability-indicator is-yellow"><span class="availability-dot"></span><strong>Später verfügbar</strong><span>In 3 Stunden</span></div>
-                        <div class="contractor-actions">
-                            <a href="#" class="btn btn-secondary">Profil ansehen</a>
-                            <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="AquaFix Haustechnik" data-chat-city="Berlin Prenzlauer Berg" data-chat-trade="Sanitär"><i class="fas fa-comments"></i> Direkt chatten</button>
-                        </div>
-                    </article>
-                    <article class="contractor-card reveal delay-3" data-name="Klarfluss Service" data-trade="sanitär" data-city="berlin friedrichshain" data-tags="sanitär sanitaer klempner abfluss wasserschaden berlin friedrichshain 9 km morgen früh">
-                        <div class="contractor-header">
-                            <div class="contractor-avatar"><i class="fas fa-building"></i></div>
-                            <div>
-                                <h3>Klarfluss Service</h3>
-                                <div class="contractor-rating"><i class="fas fa-star"></i><span>91 Match</span></div>
-                            </div>
-                        </div>
-                        <p class="contractor-desc">Abfluss und Wasserschaden</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Friedrichshain</span><span><i class="fas fa-wrench"></i> Sanitär</span><span><i class="fas fa-route"></i> 9 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>Morgen früh</span></div>
-                        <div class="contractor-actions">
-                            <a href="#" class="btn btn-secondary">Profil ansehen</a>
-                            <button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Klarfluss Service" data-chat-city="Berlin Friedrichshain" data-chat-trade="Sanitär"><i class="fas fa-comments"></i> Direkt chatten</button>
-                        </div>
-                    </article>
-                    <article class="contractor-card reveal delay-4" data-name="Norddach Meisterbetrieb" data-trade="dach" data-city="berlin spandau" data-tags="dach dachdecker undichte dächer sturmschäden berlin spandau 11 km heute verfügbar">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Norddach Meisterbetrieb</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>96 Match</span></div></div></div>
-                        <p class="contractor-desc">Undichte Dächer und Sturmschäden</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Spandau</span><span><i class="fas fa-house-chimney"></i> Dach</span><span><i class="fas fa-route"></i> 11 km</span></div>
-                        <div class="availability-indicator is-green"><span class="availability-dot"></span><strong>Sofort verfügbar</strong><span>Heute verfügbar</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Norddach Meisterbetrieb" data-chat-city="Berlin Spandau" data-chat-trade="Dach"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-1" data-name="Dachwacht Berlin" data-trade="dach" data-city="berlin tempelhof" data-tags="dach dachdecker leckageortung reparatur berlin tempelhof 8 km morgen">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Dachwacht Berlin</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>92 Match</span></div></div></div>
-                        <p class="contractor-desc">Leckageortung und Reparatur</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Tempelhof</span><span><i class="fas fa-house-chimney"></i> Dach</span><span><i class="fas fa-route"></i> 8 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>Morgen</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Dachwacht Berlin" data-chat-city="Berlin Tempelhof" data-chat-trade="Dach"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-2" data-name="FirstRoof Solutions" data-trade="dach" data-city="berlin neukölln" data-tags="dach dachdecker flachdach abdichtung berlin neukölln 13 km 24 stunden">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>FirstRoof Solutions</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>89 Match</span></div></div></div>
-                        <p class="contractor-desc">Flachdach und Abdichtung</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Neukölln</span><span><i class="fas fa-house-chimney"></i> Dach</span><span><i class="fas fa-route"></i> 13 km</span></div>
-                        <div class="availability-indicator is-yellow"><span class="availability-dot"></span><strong>Später verfügbar</strong><span>In 24 Stunden</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="FirstRoof Solutions" data-chat-city="Berlin Neukölln" data-chat-trade="Dach"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-3" data-name="Voltwerk Elektroservice" data-trade="elektro" data-city="berlin wedding" data-tags="elektro elektriker strom kurzschluss ausfall berlin wedding 5 km heute verfügbar">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Voltwerk Elektroservice</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>97 Match</span></div></div></div>
-                        <p class="contractor-desc">Kurzschluss und Ausfall</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Wedding</span><span><i class="fas fa-bolt"></i> Elektro</span><span><i class="fas fa-route"></i> 5 km</span></div>
-                        <div class="availability-indicator is-green"><span class="availability-dot"></span><strong>Sofort verfügbar</strong><span>Heute verfügbar</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Voltwerk Elektroservice" data-chat-city="Berlin Wedding" data-chat-trade="Elektro"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-4" data-name="Lichtpunkt Technik" data-trade="elektro" data-city="berlin charlottenburg" data-tags="elektro elektriker sicherungskasten leitungen berlin charlottenburg 9 km 5 stunden">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Lichtpunkt Technik</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>93 Match</span></div></div></div>
-                        <p class="contractor-desc">Sicherungskasten und Leitungen</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Charlottenburg</span><span><i class="fas fa-bolt"></i> Elektro</span><span><i class="fas fa-route"></i> 9 km</span></div>
-                        <div class="availability-indicator is-yellow"><span class="availability-dot"></span><strong>Später verfügbar</strong><span>In 5 Stunden</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Lichtpunkt Technik" data-chat-city="Berlin Charlottenburg" data-chat-trade="Elektro"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-1" data-name="Elektro Urban" data-trade="elektro" data-city="berlin kreuzberg" data-tags="elektro elektriker wohnungsinstallationen hausinstallationen berlin kreuzberg 6 km morgen früh">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Elektro Urban</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>90 Match</span></div></div></div>
-                        <p class="contractor-desc">Wohnungs- und Hausinstallationen</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Kreuzberg</span><span><i class="fas fa-bolt"></i> Elektro</span><span><i class="fas fa-route"></i> 6 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>Morgen früh</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Elektro Urban" data-chat-city="Berlin Kreuzberg" data-chat-trade="Elektro"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-2" data-name="Raumfarbe Pro" data-trade="maler" data-city="berlin steglitz" data-tags="maler streichen farbe wand decke feuchtigkeit berlin steglitz 10 km diese woche">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Raumfarbe Pro</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>91 Match</span></div></div></div>
-                        <p class="contractor-desc">Wand, Decke, Feuchtigkeitsfolgen</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Steglitz</span><span><i class="fas fa-paint-roller"></i> Maler</span><span><i class="fas fa-route"></i> 10 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>Diese Woche</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Raumfarbe Pro" data-chat-city="Berlin Steglitz" data-chat-trade="Maler"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-3" data-name="Malerteam Weiss" data-trade="maler" data-city="berlin mitte" data-tags="maler streichen sanierung innenanstrich berlin mitte 4 km 2 tagen">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Malerteam Weiss</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>89 Match</span></div></div></div>
-                        <p class="contractor-desc">Innenanstrich und Sanierung</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Mitte</span><span><i class="fas fa-paint-roller"></i> Maler</span><span><i class="fas fa-route"></i> 4 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>In 2 Tagen</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Malerteam Weiss" data-chat-city="Berlin Mitte" data-chat-trade="Maler"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-4" data-name="Renovio Innenausbau" data-trade="maler" data-city="berlin lichtenberg" data-tags="maler renovierung oberflächensanierung wand berlin lichtenberg 12 km nächste woche">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Renovio Innenausbau</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>86 Match</span></div></div></div>
-                        <p class="contractor-desc">Wand- und Oberflächensanierung</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin Lichtenberg</span><span><i class="fas fa-paint-roller"></i> Maler</span><span><i class="fas fa-route"></i> 12 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>Nächste Woche</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Renovio Innenausbau" data-chat-city="Berlin Lichtenberg" data-chat-trade="Maler"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-1" data-name="Haushelden Service" data-trade="allround" data-city="berlin" data-tags="allround handwerker koordination gewerke berlin 6 km heute verfügbar">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Haushelden Service</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>88 Match</span></div></div></div>
-                        <p class="contractor-desc">Koordination mehrerer Gewerke</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin</span><span><i class="fas fa-toolbox"></i> Allround</span><span><i class="fas fa-route"></i> 6 km</span></div>
-                        <div class="availability-indicator is-green"><span class="availability-dot"></span><strong>Sofort verfügbar</strong><span>Heute verfügbar</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Haushelden Service" data-chat-city="Berlin" data-chat-trade="Allround"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-2" data-name="Fixwerk Objektservice" data-trade="allround" data-city="berlin" data-tags="allround reparaturen objektservice berlin 8 km morgen">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Fixwerk Objektservice</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>85 Match</span></div></div></div>
-                        <p class="contractor-desc">Allround-Reparaturen</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin</span><span><i class="fas fa-toolbox"></i> Allround</span><span><i class="fas fa-route"></i> 8 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>Morgen</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Fixwerk Objektservice" data-chat-city="Berlin" data-chat-trade="Allround"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
-                    <article class="contractor-card reveal delay-3" data-name="Projektbau 360" data-trade="allround" data-city="berlin" data-tags="allround komplexe problemfälle projektbau berlin 14 km 2 tagen">
-                        <div class="contractor-header"><div class="contractor-avatar"><i class="fas fa-building"></i></div><div><h3>Projektbau 360</h3><div class="contractor-rating"><i class="fas fa-star"></i><span>83 Match</span></div></div></div>
-                        <p class="contractor-desc">Komplexe Problemfälle</p>
-                        <div class="contractor-meta"><span><i class="fas fa-map-marker-alt"></i> Berlin</span><span><i class="fas fa-toolbox"></i> Allround</span><span><i class="fas fa-route"></i> 14 km</span></div>
-                        <div class="availability-indicator is-red"><span class="availability-dot"></span><strong>Heute nicht verfügbar</strong><span>In 2 Tagen</span></div>
-                        <div class="contractor-actions"><a href="#" class="btn btn-secondary">Profil ansehen</a><button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="Projektbau 360" data-chat-city="Berlin" data-chat-trade="Allround"><i class="fas fa-comments"></i> Direkt chatten</button></div>
-                    </article>
+                    <!-- Karten werden dynamisch per JavaScript generiert -->
                 </div>
                 <div class="contractor-empty-state is-hidden" id="contractorEmptyState">
                     <i class="fas fa-building-circle-xmark"></i>
@@ -478,6 +432,589 @@
             </div>
         </section>
     </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="script.js"></script>
+    <script>
+    /* ── Nailit Map Logic — Ganz Deutschland mit Preisen + Anfahrt ── */
+    (function() {
+        var map, userMarker, radiusCircle;
+        var businessMarkers = [];
+        var userLat = null, userLng = null;
+        var locationResolved = false;
+
+        /* ── ANFAHRTSKOSTEN-BERECHNUNG ── */
+        function calcAnfahrt(distKm) {
+            if (distKm <= 5) return 0;
+            if (distKm <= 10) return 15;
+            if (distKm <= 15) return 25;
+            if (distKm <= 25) return 39;
+            if (distKm <= 50) return 59;
+            return 79;
+        }
+        function formatPrice(val) { return val.toFixed(2).replace('.', ',') + ' €'; }
+
+        /* ── BETRIEBE GANZ DEUTSCHLAND ── */
+        var businesses = [
+            // ── BERLIN (21) ──
+            { name:'Meyer Sanitair Notdienst', trade:'sanitär', lat:52.520, lng:13.405, avail:'green', desc:'Rohrleck, Feuchtigkeit, Bad', city:'Berlin', priceFrom:89, priceTo:320 },
+            { name:'AquaFix Haustechnik', trade:'sanitär', lat:52.5388, lng:13.4244, avail:'yellow', desc:'Leitungen und Armaturen', city:'Berlin', priceFrom:75, priceTo:280 },
+            { name:'Klarfluss Service', trade:'sanitär', lat:52.5163, lng:13.4541, avail:'red', desc:'Abfluss und Wasserschaden', city:'Berlin', priceFrom:95, priceTo:450 },
+            { name:'RohrBlitz 24h', trade:'sanitär', lat:52.492, lng:13.361, avail:'green', desc:'Notdienst Rohrbruch, 24h', city:'Berlin', priceFrom:119, priceTo:380 },
+            { name:'WasserWerk Installationen', trade:'sanitär', lat:52.551, lng:13.447, avail:'yellow', desc:'Badsanierung und Heizung', city:'Berlin', priceFrom:150, priceTo:2800 },
+            { name:'Norddach Meisterbetrieb', trade:'dach', lat:52.5346, lng:13.1988, avail:'green', desc:'Undichte Dächer, Sturmschäden', city:'Berlin', priceFrom:250, priceTo:4500 },
+            { name:'Dachwacht Berlin', trade:'dach', lat:52.4679, lng:13.3855, avail:'red', desc:'Leckageortung und Reparatur', city:'Berlin', priceFrom:180, priceTo:1200 },
+            { name:'FirstRoof Solutions', trade:'dach', lat:52.4812, lng:13.435, avail:'yellow', desc:'Flachdach und Abdichtung', city:'Berlin', priceFrom:220, priceTo:3800 },
+            { name:'Berliner Dachprofis', trade:'dach', lat:52.544, lng:13.35, avail:'green', desc:'Dachstuhl, Gaube, Dämmung', city:'Berlin', priceFrom:300, priceTo:5500 },
+            { name:'Voltwerk Elektroservice', trade:'elektro', lat:52.5488, lng:13.3594, avail:'green', desc:'Kurzschluss und Ausfall', city:'Berlin', priceFrom:65, priceTo:280 },
+            { name:'Lichtpunkt Technik', trade:'elektro', lat:52.5161, lng:13.304, avail:'yellow', desc:'Sicherungskasten, Leitungen', city:'Berlin', priceFrom:80, priceTo:420 },
+            { name:'Elektro Urban', trade:'elektro', lat:52.499, lng:13.403, avail:'red', desc:'Haus- und Wohnungsinstallation', city:'Berlin', priceFrom:70, priceTo:350 },
+            { name:'StromFix Berlin', trade:'elektro', lat:52.506, lng:13.327, avail:'green', desc:'Steckdosen, Sicherungen, Wallbox', city:'Berlin', priceFrom:55, priceTo:1800 },
+            { name:'Raumfarbe Pro', trade:'maler', lat:52.4569, lng:13.3174, avail:'red', desc:'Wand, Decke, Feuchtigkeitsfolgen', city:'Berlin', priceFrom:45, priceTo:180 },
+            { name:'Malerteam Weiss', trade:'maler', lat:52.522, lng:13.41, avail:'yellow', desc:'Innenanstrich und Sanierung', city:'Berlin', priceFrom:40, priceTo:220 },
+            { name:'Renovio Innenausbau', trade:'maler', lat:52.5145, lng:13.4756, avail:'red', desc:'Wand- und Oberflächensanierung', city:'Berlin', priceFrom:55, priceTo:350 },
+            { name:'FarbKunst Berlin', trade:'maler', lat:52.535, lng:13.415, avail:'green', desc:'Fassade, Tapete, Spachteltechnik', city:'Berlin', priceFrom:50, priceTo:280 },
+            { name:'Haushelden Service', trade:'allround', lat:52.51, lng:13.389, avail:'green', desc:'Koordination mehrerer Gewerke', city:'Berlin', priceFrom:45, priceTo:150 },
+            { name:'Fixwerk Objektservice', trade:'allround', lat:52.53, lng:13.42, avail:'red', desc:'Allround-Reparaturen', city:'Berlin', priceFrom:55, priceTo:190 },
+            { name:'Projektbau 360', trade:'allround', lat:52.505, lng:13.45, avail:'red', desc:'Komplexe Problemfälle', city:'Berlin', priceFrom:120, priceTo:480 },
+            { name:'HausDoktor Berlin', trade:'allround', lat:52.487, lng:13.431, avail:'green', desc:'Kleinreparaturen aller Art', city:'Berlin', priceFrom:39, priceTo:120 },
+
+            // ── HAMBURG (5) ──
+            { name:'Elbe Sanitär GmbH', trade:'sanitär', lat:53.5511, lng:9.9937, avail:'green', desc:'Notdienst und Badsanierung', city:'Hamburg', priceFrom:95, priceTo:380 },
+            { name:'Nordlicht Elektro', trade:'elektro', lat:53.5653, lng:9.9629, avail:'yellow', desc:'Smart Home und Elektrik', city:'Hamburg', priceFrom:75, priceTo:520 },
+            { name:'Hanseatic Dachbau', trade:'dach', lat:53.5544, lng:10.009, avail:'green', desc:'Sturmschäden und Flachdach', city:'Hamburg', priceFrom:280, priceTo:4200 },
+            { name:'Farbenhaus Hamburg', trade:'maler', lat:53.5488, lng:9.9872, avail:'red', desc:'Fassade und Innenbereich', city:'Hamburg', priceFrom:42, priceTo:240 },
+            { name:'Alster Handwerk', trade:'allround', lat:53.5563, lng:10.023, avail:'green', desc:'Montage, Reparatur, Umzug', city:'Hamburg', priceFrom:49, priceTo:160 },
+
+            // ── MÜNCHEN (5) ──
+            { name:'Isar Sanitärtechnik', trade:'sanitär', lat:48.1351, lng:11.582, avail:'green', desc:'Heizung, Bad, Wasserschaden', city:'München', priceFrom:105, priceTo:420 },
+            { name:'AlpenStrom München', trade:'elektro', lat:48.148, lng:11.5674, avail:'yellow', desc:'Gebäudeelektrik und PV-Anlagen', city:'München', priceFrom:85, priceTo:2200 },
+            { name:'Bayerndach Meister', trade:'dach', lat:48.123, lng:11.595, avail:'green', desc:'Steildach, Rinne, Schneeschutz', city:'München', priceFrom:320, priceTo:5800 },
+            { name:'Pinselstrich München', trade:'maler', lat:48.1395, lng:11.549, avail:'yellow', desc:'Altbausanierung und Stuck', city:'München', priceFrom:52, priceTo:300 },
+            { name:'MünchenFix Allround', trade:'allround', lat:48.156, lng:11.578, avail:'green', desc:'Komplettservice Haus/Wohnung', city:'München', priceFrom:45, priceTo:180 },
+
+            // ── KÖLN (4) ──
+            { name:'Dom Sanitär Köln', trade:'sanitär', lat:50.9375, lng:6.9603, avail:'green', desc:'Rohr, Heizung, Notdienst', city:'Köln', priceFrom:89, priceTo:350 },
+            { name:'RheinElektro', trade:'elektro', lat:50.9413, lng:6.9582, avail:'green', desc:'Hausanschluss und Beleuchtung', city:'Köln', priceFrom:72, priceTo:380 },
+            { name:'Kölner Dachwerk', trade:'dach', lat:50.929, lng:6.942, avail:'yellow', desc:'Dachsanierung und Gauben', city:'Köln', priceFrom:260, priceTo:3600 },
+            { name:'Farbmeister Köln', trade:'maler', lat:50.948, lng:6.953, avail:'red', desc:'Malerarbeiten innen und außen', city:'Köln', priceFrom:38, priceTo:210 },
+
+            // ── FRANKFURT (4) ──
+            { name:'MainWasser Technik', trade:'sanitär', lat:50.1109, lng:8.6821, avail:'yellow', desc:'Heizungsbau und Sanitär', city:'Frankfurt', priceFrom:98, priceTo:380 },
+            { name:'Skyline Elektrik', trade:'elektro', lat:50.1155, lng:8.6724, avail:'green', desc:'Gewerbe- und Privatinstallation', city:'Frankfurt', priceFrom:80, priceTo:450 },
+            { name:'Taunus Dachbau', trade:'dach', lat:50.102, lng:8.695, avail:'green', desc:'Eternit, Ziegel, Blechdach', city:'Frankfurt', priceFrom:240, priceTo:4100 },
+            { name:'Hessen Maler Service', trade:'maler', lat:50.123, lng:8.662, avail:'yellow', desc:'Tapezieren, Lackieren, Boden', city:'Frankfurt', priceFrom:44, priceTo:260 },
+
+            // ── DÜSSELDORF (3) ──
+            { name:'Rhein-Ruhr Sanitär', trade:'sanitär', lat:51.2277, lng:6.7735, avail:'green', desc:'Sanitär-Komplettservice', city:'Düsseldorf', priceFrom:85, priceTo:340 },
+            { name:'NRW Elektrofix', trade:'elektro', lat:51.233, lng:6.783, avail:'yellow', desc:'E-Mobilität und Haussicherung', city:'Düsseldorf', priceFrom:78, priceTo:1600 },
+            { name:'Düssel Dach & Fassade', trade:'dach', lat:51.221, lng:6.768, avail:'green', desc:'Flachdach und Fassadensanierung', city:'Düsseldorf', priceFrom:290, priceTo:4800 },
+
+            // ── STUTTGART (4) ──
+            { name:'Schwabenrohr GmbH', trade:'sanitär', lat:48.7758, lng:9.1829, avail:'green', desc:'Bad, Heizung, Gasinstallation', city:'Stuttgart', priceFrom:92, priceTo:360 },
+            { name:'Kessler Elektrotechnik', trade:'elektro', lat:48.769, lng:9.172, avail:'green', desc:'Altbau-Elektrik und KNX', city:'Stuttgart', priceFrom:82, priceTo:580 },
+            { name:'Schwäbische Dachprofis', trade:'dach', lat:48.783, lng:9.19, avail:'yellow', desc:'Dachfenster und Wärmedämmung', city:'Stuttgart', priceFrom:310, priceTo:5200 },
+            { name:'Neckar Maler Profis', trade:'maler', lat:48.772, lng:9.168, avail:'green', desc:'Fassade, WDVS, Innenanstrich', city:'Stuttgart', priceFrom:48, priceTo:280 },
+
+            // ── LEIPZIG (3) ──
+            { name:'SachsenSanitär', trade:'sanitär', lat:51.3397, lng:12.3731, avail:'green', desc:'Badsanierung und Altbau', city:'Leipzig', priceFrom:82, priceTo:310 },
+            { name:'Leipziger Strom', trade:'elektro', lat:51.344, lng:12.38, avail:'green', desc:'Altbau-Modernisierung', city:'Leipzig', priceFrom:65, priceTo:340 },
+            { name:'Sachsen Dachdeckerei', trade:'dach', lat:51.335, lng:12.365, avail:'yellow', desc:'Ziegel und Schieferdach', city:'Leipzig', priceFrom:230, priceTo:3400 },
+
+            // ── DRESDEN (3) ──
+            { name:'Elbestadt Sanitär', trade:'sanitär', lat:51.0504, lng:13.7373, avail:'green', desc:'Wärmepumpe und Heizung', city:'Dresden', priceFrom:88, priceTo:350 },
+            { name:'Dresdner Dachwerk', trade:'dach', lat:51.058, lng:13.745, avail:'yellow', desc:'Denkmalpflege und Schieferdach', city:'Dresden', priceFrom:280, priceTo:4600 },
+            { name:'Semper Elektrik', trade:'elektro', lat:51.047, lng:13.732, avail:'green', desc:'PV-Anlagen und Smart Home', city:'Dresden', priceFrom:78, priceTo:1900 },
+
+            // ── NÜRNBERG (3) ──
+            { name:'Franken Sanitär', trade:'sanitär', lat:49.4521, lng:11.0767, avail:'green', desc:'Rohrinstallation und Bad', city:'Nürnberg', priceFrom:85, priceTo:330 },
+            { name:'Burgstadt Elektrik', trade:'elektro', lat:49.448, lng:11.083, avail:'green', desc:'Gebäudetechnik und Beleuchtung', city:'Nürnberg', priceFrom:70, priceTo:380 },
+            { name:'Franken Dach Meister', trade:'dach', lat:49.455, lng:11.07, avail:'yellow', desc:'Steildach und Blechverkleidung', city:'Nürnberg', priceFrom:260, priceTo:3800 },
+
+            // ── HANNOVER (3) ──
+            { name:'Niedersachsen Sanitär', trade:'sanitär', lat:52.3759, lng:9.732, avail:'green', desc:'Heizkörper und Rohrleitungen', city:'Hannover', priceFrom:88, priceTo:340 },
+            { name:'Expo Elektrik', trade:'elektro', lat:52.38, lng:9.745, avail:'yellow', desc:'Gebäudeautomation und Alarm', city:'Hannover', priceFrom:75, priceTo:480 },
+            { name:'Leine Dachbau', trade:'dach', lat:52.37, lng:9.72, avail:'green', desc:'Dachsanierung Altbau', city:'Hannover', priceFrom:250, priceTo:4000 },
+
+            // ── DORTMUND (3) ──
+            { name:'Ruhrgebiet Sanitär', trade:'sanitär', lat:51.5136, lng:7.4653, avail:'green', desc:'24h Notdienst, Heizung', city:'Dortmund', priceFrom:89, priceTo:360 },
+            { name:'Signal Elektrik', trade:'elektro', lat:51.517, lng:7.472, avail:'green', desc:'Photovoltaik und Hauselektrik', city:'Dortmund', priceFrom:72, priceTo:2100 },
+            { name:'Westfalen Dach', trade:'dach', lat:51.508, lng:7.458, avail:'yellow', desc:'Sturmschaden und Neubau', city:'Dortmund', priceFrom:270, priceTo:4400 },
+
+            // ── ESSEN (2) ──
+            { name:'Gruga Sanitär', trade:'sanitär', lat:51.4556, lng:7.0116, avail:'green', desc:'Wasser und Wärmetechnik', city:'Essen', priceFrom:86, priceTo:320 },
+            { name:'Essener Elektro Service', trade:'elektro', lat:51.46, lng:7.018, avail:'yellow', desc:'Energieberatung und Installation', city:'Essen', priceFrom:78, priceTo:420 },
+
+            // ── BREMEN (3) ──
+            { name:'Weser Sanitär', trade:'sanitär', lat:53.0793, lng:8.8017, avail:'green', desc:'Bad und Heizungstechnik', city:'Bremen', priceFrom:84, priceTo:310 },
+            { name:'Hanse Elektrotechnik', trade:'elektro', lat:53.083, lng:8.811, avail:'green', desc:'Privat und Gewerbe', city:'Bremen', priceFrom:68, priceTo:350 },
+            { name:'Bremer Dachprofis', trade:'dach', lat:53.075, lng:8.795, avail:'yellow', desc:'Flachdach und Reetdach', city:'Bremen', priceFrom:280, priceTo:5000 },
+
+            // ── DUISBURG (2) ──
+            { name:'Rhein Sanitär Duisburg', trade:'sanitär', lat:51.4344, lng:6.7623, avail:'green', desc:'Gasheizung und Wasserleitung', city:'Duisburg', priceFrom:82, priceTo:300 },
+            { name:'Hafen Elektrik', trade:'elektro', lat:51.438, lng:6.77, avail:'green', desc:'Industrieelektrik und Privat', city:'Duisburg', priceFrom:70, priceTo:380 },
+
+            // ── BONN (2) ──
+            { name:'Beethoven Sanitär', trade:'sanitär', lat:50.7374, lng:7.0982, avail:'green', desc:'Heizung und Sanitär', city:'Bonn', priceFrom:90, priceTo:350 },
+            { name:'Rheinblick Maler', trade:'maler', lat:50.74, lng:7.105, avail:'yellow', desc:'Altbausanierung und Fassade', city:'Bonn', priceFrom:42, priceTo:250 },
+
+            // ── MÜNSTER (2) ──
+            { name:'Westfalen Wasser GmbH', trade:'sanitär', lat:51.9607, lng:7.6261, avail:'green', desc:'Heizung, Bad, Thermie', city:'Münster', priceFrom:88, priceTo:380 },
+            { name:'Dom Elektrik Münster', trade:'elektro', lat:51.964, lng:7.632, avail:'green', desc:'Wallbox und Gebäudetechnik', city:'Münster', priceFrom:74, priceTo:1800 },
+
+            // ── MANNHEIM (2) ──
+            { name:'Kurpfalz Sanitär', trade:'sanitär', lat:49.4875, lng:8.4661, avail:'green', desc:'Bad und Heizungstechnik', city:'Mannheim', priceFrom:85, priceTo:320 },
+            { name:'Mannheimer Dachwerk', trade:'dach', lat:49.492, lng:8.47, avail:'yellow', desc:'Dach und Fassadensanierung', city:'Mannheim', priceFrom:260, priceTo:4200 },
+
+            // ── KARLSRUHE (2) ──
+            { name:'Fächer Sanitär', trade:'sanitär', lat:49.0069, lng:8.4037, avail:'green', desc:'Trinkwasser und Abwasser', city:'Karlsruhe', priceFrom:82, priceTo:300 },
+            { name:'Baden Elektro Service', trade:'elektro', lat:49.012, lng:8.41, avail:'green', desc:'PV und Hauselektrik', city:'Karlsruhe', priceFrom:72, priceTo:2400 },
+
+            // ── AUGSBURG (2) ──
+            { name:'Fuggerstadt Sanitär', trade:'sanitär', lat:48.3705, lng:10.8978, avail:'green', desc:'Heizkesseltausch und Bad', city:'Augsburg', priceFrom:88, priceTo:340 },
+            { name:'Augsburger Dach GmbH', trade:'dach', lat:48.374, lng:10.905, avail:'green', desc:'Steildach und Gauben', city:'Augsburg', priceFrom:250, priceTo:3800 },
+
+            // ── KIEL (2) ──
+            { name:'Förde Sanitär', trade:'sanitär', lat:54.3233, lng:10.1228, avail:'green', desc:'Meisterbetrieb seit 1998', city:'Kiel', priceFrom:86, priceTo:330 },
+            { name:'Ostsee Elektrotechnik', trade:'elektro', lat:54.328, lng:10.13, avail:'yellow', desc:'Marine- und Hauselektrik', city:'Kiel', priceFrom:75, priceTo:420 },
+
+            // ── ROSTOCK (2) ──
+            { name:'Hanse Sanitär Rostock', trade:'sanitär', lat:54.0924, lng:12.0991, avail:'green', desc:'Heizung und Rohrleitungsbau', city:'Rostock', priceFrom:79, priceTo:290 },
+            { name:'Warnow Dach', trade:'dach', lat:54.098, lng:12.105, avail:'yellow', desc:'Reetdach und Blechdach', city:'Rostock', priceFrom:300, priceTo:5500 },
+
+            // ── ERFURT (2) ──
+            { name:'Thüringen Sanitär', trade:'sanitär', lat:50.9848, lng:11.0299, avail:'green', desc:'Wasser und Wärme', city:'Erfurt', priceFrom:78, priceTo:290 },
+            { name:'Krämerbrücke Elektrik', trade:'elektro', lat:50.988, lng:11.035, avail:'green', desc:'Altbausanierung Elektrik', city:'Erfurt', priceFrom:65, priceTo:320 },
+
+            // ── MAINZ (2) ──
+            { name:'Rheinhessen Sanitär', trade:'sanitär', lat:50.0, lng:8.2711, avail:'green', desc:'Heizungsbau und Bad', city:'Mainz', priceFrom:88, priceTo:350 },
+            { name:'Mainzer Dach & Fassade', trade:'dach', lat:50.005, lng:8.278, avail:'green', desc:'Schieferdach und Flachdach', city:'Mainz', priceFrom:270, priceTo:4200 },
+
+            // ── SAARBRÜCKEN (2) ──
+            { name:'Saar Sanitärtechnik', trade:'sanitär', lat:49.2354, lng:6.9961, avail:'green', desc:'Heizung und Klima', city:'Saarbrücken', priceFrom:82, priceTo:310 },
+            { name:'Saarland Maler Profis', trade:'maler', lat:49.24, lng:7.005, avail:'yellow', desc:'Fassade und Innenraum', city:'Saarbrücken', priceFrom:40, priceTo:220 },
+
+            // ── POTSDAM (2) ──
+            { name:'Sanssouci Sanitär', trade:'sanitär', lat:52.3906, lng:13.0645, avail:'green', desc:'Altbausanierung Bad', city:'Potsdam', priceFrom:92, priceTo:380 },
+            { name:'Havel Elektrotechnik', trade:'elektro', lat:52.395, lng:13.07, avail:'green', desc:'Smarte Gebäudetechnik', city:'Potsdam', priceFrom:78, priceTo:520 },
+
+            // ── FREIBURG (2) ──
+            { name:'Schwarzwald Sanitär', trade:'sanitär', lat:47.999, lng:7.842, avail:'green', desc:'Solar-Heizung und Bad', city:'Freiburg', priceFrom:95, priceTo:380 },
+            { name:'Breisgau Dach', trade:'dach', lat:48.005, lng:7.85, avail:'green', desc:'Solardach und Dämmung', city:'Freiburg', priceFrom:320, priceTo:6200 },
+
+            // ── REGENSBURG (2) ──
+            { name:'Donau Sanitär', trade:'sanitär', lat:49.0134, lng:12.1016, avail:'green', desc:'Wassertechnik und Heizung', city:'Regensburg', priceFrom:84, priceTo:320 },
+            { name:'Oberpfalz Elektro', trade:'elektro', lat:49.018, lng:12.108, avail:'yellow', desc:'E-Mobilität und Gebäudetechnik', city:'Regensburg', priceFrom:72, priceTo:1600 },
+
+            // ── MAGDEBURG (2) ──
+            { name:'Elbe Sanitär Magdeburg', trade:'sanitär', lat:52.1205, lng:11.6276, avail:'green', desc:'Heizung und Trinkwasser', city:'Magdeburg', priceFrom:76, priceTo:280 },
+            { name:'Ottostadt Elektrik', trade:'elektro', lat:52.125, lng:11.635, avail:'green', desc:'Privat- und Gewerbeelektrik', city:'Magdeburg', priceFrom:62, priceTo:300 },
+
+            // ── BIELEFELD (2) ──
+            { name:'Teutoburg Sanitär', trade:'sanitär', lat:52.0302, lng:8.5325, avail:'green', desc:'Heizung und Sanitärinstallation', city:'Bielefeld', priceFrom:82, priceTo:310 },
+            { name:'OWL Dachbau', trade:'dach', lat:52.035, lng:8.54, avail:'green', desc:'Dachsanierung und Neubau', city:'Bielefeld', priceFrom:240, priceTo:3600 },
+
+            // ── WUPPERTAL (2) ──
+            { name:'Schwebebahn Sanitär', trade:'sanitär', lat:51.2562, lng:7.1508, avail:'green', desc:'Bad und Heizungsmodernisierung', city:'Wuppertal', priceFrom:85, priceTo:330 },
+            { name:'Bergisch Elektro', trade:'elektro', lat:51.26, lng:7.158, avail:'yellow', desc:'Altbau-Elektrik und Alarm', city:'Wuppertal', priceFrom:72, priceTo:380 },
+
+            // ── LÜBECK (2) ──
+            { name:'Holstentor Sanitär', trade:'sanitär', lat:53.8655, lng:10.6866, avail:'green', desc:'Heizung und Trinkwasser', city:'Lübeck', priceFrom:82, priceTo:300 },
+            { name:'Travemünde Dach', trade:'dach', lat:53.87, lng:10.695, avail:'green', desc:'Backsteindach und Sanierung', city:'Lübeck', priceFrom:260, priceTo:4000 },
+
+            // ── WIESBADEN (2) ──
+            { name:'Kurpark Sanitär', trade:'sanitär', lat:50.0826, lng:8.2403, avail:'green', desc:'Heizung und Bädertechnik', city:'Wiesbaden', priceFrom:90, priceTo:360 },
+            { name:'Nassauer Elektrik', trade:'elektro', lat:50.088, lng:8.248, avail:'green', desc:'Gebäudeautomation', city:'Wiesbaden', priceFrom:78, priceTo:460 },
+
+            // ── BOCHUM (2) ──
+            { name:'Ruhr Sanitär Bochum', trade:'sanitär', lat:51.4818, lng:7.2162, avail:'green', desc:'Heizung und Rohrsanierung', city:'Bochum', priceFrom:84, priceTo:320 },
+            { name:'Grüne Dach Bochum', trade:'dach', lat:51.486, lng:7.222, avail:'yellow', desc:'Gründach und Flachdach', city:'Bochum', priceFrom:280, priceTo:4600 }
+        ];
+
+        function getMarkerColor(avail) {
+            if (avail === 'green') return '#22c55e';
+            if (avail === 'yellow') return '#f59e0b';
+            return '#ef4444';
+        }
+
+        function createIcon(color) {
+            return L.divIcon({
+                className: 'nailit-map-marker',
+                html: '<div style="background:' + color + ';width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>',
+                iconSize: [16, 16], iconAnchor: [8, 8], popupAnchor: [0, -12]
+            });
+        }
+
+        function userIcon() {
+            return L.divIcon({
+                className: 'nailit-map-marker-user',
+                html: '<div style="background:#3b82f6;width:20px;height:20px;border-radius:50%;border:4px solid #fff;box-shadow:0 0 0 3px rgba(59,130,246,0.4), 0 2px 10px rgba(0,0,0,0.3);"></div>',
+                iconSize: [20, 20], iconAnchor: [10, 10]
+            });
+        }
+
+        function getDistanceKm(lat1, lng1, lat2, lng2) {
+            var R = 6371;
+            var dLat = (lat2 - lat1) * Math.PI / 180;
+            var dLng = (lng2 - lng1) * Math.PI / 180;
+            var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+                    Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+                    Math.sin(dLng/2)*Math.sin(dLng/2);
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function initMap() {
+            if (map) return;
+            var startLat = userLat !== null ? userLat : 51.1657;
+            var startLng = userLng !== null ? userLng : 10.4515;
+            var startZoom = userLat !== null ? 12 : 6;
+            map = L.map('nailitMap', { center: [startLat, startLng], zoom: startZoom, zoomControl: true, scrollWheelZoom: true });
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>', maxZoom: 19
+            }).addTo(map);
+
+            if (userLat !== null) {
+                userMarker = L.marker([userLat, userLng], { icon: userIcon() }).addTo(map);
+                userMarker.bindPopup('<strong>Dein Standort</strong>');
+
+                var radius = parseInt(document.getElementById('mapRadiusSelect').value) * 1000;
+                radiusCircle = L.circle([userLat, userLng], { radius: radius, color:'#FF6600', fillColor:'#FF6600', fillOpacity:0.08, weight:2, dashArray:'6 4' }).addTo(map);
+
+                updateMarkers();
+            } else {
+                // Alle Betriebe ohne Entfernung auf der Karte anzeigen
+                businesses.forEach(function(b) {
+                    var marker = L.marker([b.lat, b.lng], { icon: createIcon(getMarkerColor(b.avail)) }).addTo(map);
+                    var tradeLabel = b.trade.charAt(0).toUpperCase() + b.trade.slice(1);
+                    marker.bindPopup(
+                        '<div style="font-family:Manrope,sans-serif;min-width:200px;">' +
+                        '<strong style="font-size:0.95rem;">' + b.name + '</strong><br>' +
+                        '<span style="color:#555;font-size:0.82rem;">' + b.desc + '</span><br>' +
+                        '<span style="color:#888;font-size:0.78rem;"><i class="fas fa-map-marker-alt"></i> ' + b.city + '</span><br>' +
+                        '<span style="display:inline-block;margin-top:6px;padding:2px 8px;background:rgba(255,102,0,0.1);border-radius:6px;font-size:0.75rem;font-weight:800;color:#FF6600;">' + tradeLabel + '</span>' +
+                        '<div style="margin-top:8px;padding:6px 8px;background:rgba(255,102,0,0.06);border-radius:8px;font-size:0.82rem;">' +
+                        '💰 <strong>' + formatPrice(b.priceFrom) + ' – ' + formatPrice(b.priceTo) + '</strong>' +
+                        '</div></div>'
+                    );
+                    businessMarkers.push(marker);
+                });
+            }
+            setTimeout(function() { map.invalidateSize(); }, 200);
+        }
+
+        // Map und Karten direkt initialisieren
+        if (document.getElementById('nailitMap')) {
+            setTimeout(initMap, 100);
+        }
+        // Contractor Cards sofort rendern (ohne Entfernung)
+        setTimeout(updateContractorCards, 150);
+
+        function updateMarkers() {
+            if (!map || userLat === null) return;
+            businessMarkers.forEach(function(m) { map.removeLayer(m); });
+            businessMarkers = [];
+
+            var trade = document.getElementById('mapTradeSelect').value;
+            var radius = parseInt(document.getElementById('mapRadiusSelect').value);
+            var visibleCount = 0;
+
+            businesses.forEach(function(b) {
+                if (trade && b.trade !== trade) return;
+                var dist = getDistanceKm(userLat, userLng, b.lat, b.lng);
+                if (dist > radius) return;
+
+                var anfahrt = calcAnfahrt(dist);
+                var anfahrtText = anfahrt === 0 ? '<span style="color:#22c55e;font-weight:700;">Kostenlose Anfahrt</span>' : '<span style="font-weight:700;">+ ' + formatPrice(anfahrt) + ' Anfahrt</span>';
+                var marker = L.marker([b.lat, b.lng], { icon: createIcon(getMarkerColor(b.avail)) }).addTo(map);
+                var availText = b.avail === 'green' ? 'Sofort verfügbar' : (b.avail === 'yellow' ? 'Später verfügbar' : 'Heute nicht verfügbar');
+                var tradeLabel = b.trade.charAt(0).toUpperCase() + b.trade.slice(1);
+
+                marker.bindPopup(
+                    '<div style="font-family:Manrope,sans-serif;min-width:220px;">' +
+                    '<strong style="font-size:0.95rem;">' + b.name + '</strong><br>' +
+                    '<span style="color:#555;font-size:0.82rem;">' + b.desc + '</span><br>' +
+                    '<span style="color:#888;font-size:0.78rem;"><i class="fas fa-map-marker-alt"></i> ' + b.city + '</span><br>' +
+                    '<span style="display:inline-block;margin-top:6px;padding:2px 8px;background:rgba(255,102,0,0.1);border-radius:6px;font-size:0.75rem;font-weight:800;color:#FF6600;">' + tradeLabel + '</span> ' +
+                    '<span style="display:inline-block;margin-top:6px;padding:2px 8px;background:rgba(0,0,0,0.05);border-radius:6px;font-size:0.75rem;font-weight:700;color:#888;">' + dist.toFixed(1) + ' km</span><br>' +
+                    '<div style="margin-top:8px;padding:6px 8px;background:rgba(255,102,0,0.06);border-radius:8px;font-size:0.82rem;">' +
+                    '💰 <strong>' + formatPrice(b.priceFrom) + ' – ' + formatPrice(b.priceTo) + '</strong><br>' +
+                    '🚗 ' + anfahrtText +
+                    '</div>' +
+                    '<span style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;font-size:0.8rem;font-weight:700;color:' + getMarkerColor(b.avail) + ';">● ' + availText + '</span>' +
+                    '</div>'
+                );
+                businessMarkers.push(marker);
+                visibleCount++;
+            });
+
+            if (radiusCircle) map.removeLayer(radiusCircle);
+            radiusCircle = L.circle([userLat, userLng], { radius:radius*1000, color:'#FF6600', fillColor:'#FF6600', fillOpacity:0.08, weight:2, dashArray:'6 4' }).addTo(map);
+            map.fitBounds(radiusCircle.getBounds(), { padding: [30, 30] });
+
+            var countEl = document.getElementById('contractorResultCount');
+            if (countEl) countEl.textContent = visibleCount + ' Betriebe in deiner Nähe';
+
+            // Auch die Contractor Cards updaten — Entfernung + Anfahrt
+            updateContractorCards();
+        }
+
+        /* ── Contractor Cards dynamisch generieren ── */
+        function updateContractorCards() {
+            var grid = document.getElementById('contractorsGrid');
+            var emptyState = document.getElementById('contractorEmptyState');
+            if (!grid) return;
+
+            var hasLocation = userLat !== null;
+            var trade = document.getElementById('mapTradeSelect').value;
+            var radius = hasLocation ? parseInt(document.getElementById('mapRadiusSelect').value) : 9999;
+
+            // Gewerk-Icon Mapping
+            var tradeIcons = {
+                'sanitär': 'fa-wrench', 'elektro': 'fa-bolt', 'dach': 'fa-house-chimney',
+                'maler': 'fa-paint-roller', 'allround': 'fa-toolbox', 'heizung': 'fa-fire',
+                'schlosser': 'fa-key', 'tischler': 'fa-hammer', 'fliesenleger': 'fa-border-all',
+                'garten': 'fa-leaf'
+            };
+
+            // Verfügbarkeits-Texte
+            var availTexts = {
+                'green': { label: 'Sofort verfügbar', sub: 'Heute verfügbar', cls: 'is-green' },
+                'yellow': { label: 'Später verfügbar', sub: 'In wenigen Stunden', cls: 'is-yellow' },
+                'red': { label: 'Heute nicht verfügbar', sub: 'Morgen', cls: 'is-red' }
+            };
+
+            // Betriebe filtern und nach Entfernung sortieren
+            var filtered = [];
+            businesses.forEach(function(b) {
+                if (trade && b.trade !== trade) return;
+                var dist = hasLocation ? getDistanceKm(userLat, userLng, b.lat, b.lng) : null;
+                if (hasLocation && dist > radius) return;
+                filtered.push({ biz: b, dist: dist });
+            });
+            if (hasLocation) {
+                filtered.sort(function(a, b) { return a.dist - b.dist; });
+            }
+
+            // Grid leeren
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                if (emptyState) {
+                    emptyState.classList.remove('is-hidden');
+                    emptyState.innerHTML = '<div style="text-align:center;padding:60px 20px;"><i class="fas fa-search" style="font-size:3rem;color:#ccc;margin-bottom:16px;display:block;"></i><h3 style="margin-bottom:8px;">Keine Betriebe gefunden</h3><p style="color:#888;">Versuche einen größeren Radius oder einen anderen Standort.</p></div>';
+                }
+                return;
+            }
+            if (emptyState) emptyState.classList.add('is-hidden');
+
+            // Karten generieren
+            filtered.forEach(function(item, index) {
+                var b = item.biz;
+                var dist = item.dist;
+                var anfahrt = dist !== null ? calcAnfahrt(dist) : null;
+                var avail = availTexts[b.avail] || availTexts['green'];
+                var tradeLabel = b.trade.charAt(0).toUpperCase() + b.trade.slice(1);
+                var tradeIcon = tradeIcons[b.trade] || 'fa-tools';
+                var delayClass = 'delay-' + ((index % 4) + 1);
+                var match = b.avail === 'green' ? (90 + Math.floor(Math.random() * 9)) : (b.avail === 'yellow' ? (85 + Math.floor(Math.random() * 10)) : (80 + Math.floor(Math.random() * 10)));
+
+                var distHtml = dist !== null
+                    ? '<span><i class="fas fa-route"></i> ' + dist.toFixed(1) + ' km</span>'
+                    : '';
+
+                var priceHtml = '<span class="price-range"><i class="fas fa-coins"></i> ' + formatPrice(b.priceFrom) + ' – ' + formatPrice(b.priceTo) + '</span>';
+                if (anfahrt !== null) {
+                    priceHtml += anfahrt === 0
+                        ? '<span class="anfahrt-free"><i class="fas fa-truck"></i> Kostenlose Anfahrt</span>'
+                        : '<span class="anfahrt-cost"><i class="fas fa-truck"></i> + ' + formatPrice(anfahrt) + ' Anfahrt (' + dist.toFixed(1) + ' km)</span>';
+                }
+
+                var card = document.createElement('article');
+                card.className = 'contractor-card ' + delayClass;
+                card.setAttribute('data-name', b.name);
+                card.setAttribute('data-trade', b.trade);
+                card.setAttribute('data-city', b.city.toLowerCase());
+                card.innerHTML =
+                    '<div class="contractor-header">' +
+                        '<div class="contractor-avatar"><i class="fas fa-building"></i></div>' +
+                        '<div>' +
+                            '<h3>' + b.name + '</h3>' +
+                            '<div class="contractor-rating"><i class="fas fa-star"></i><span>' + match + ' Match</span></div>' +
+                        '</div>' +
+                    '</div>' +
+                    '<p class="contractor-desc">' + b.desc + '</p>' +
+                    '<div class="contractor-meta">' +
+                        '<span><i class="fas fa-map-marker-alt"></i> ' + b.city + '</span>' +
+                        '<span><i class="fas ' + tradeIcon + '"></i> ' + tradeLabel + '</span>' +
+                        distHtml +
+                    '</div>' +
+                    '<div class="contractor-price-tag">' +
+                        priceHtml +
+                    '</div>' +
+                    '<div class="availability-indicator ' + avail.cls + '">' +
+                        '<span class="availability-dot"></span>' +
+                        '<strong>' + avail.label + '</strong>' +
+                        '<span>' + avail.sub + '</span>' +
+                    '</div>' +
+                    '<div class="contractor-actions">' +
+                        '<a href="#" class="btn btn-secondary">Profil ansehen</a>' +
+                        '<button type="button" class="btn btn-primary contractor-chat-btn" data-chat-business="' + b.name + '" data-chat-city="' + b.city + '" data-chat-trade="' + tradeLabel + '"><i class="fas fa-comments"></i> Direkt chatten</button>' +
+                    '</div>';
+
+                grid.appendChild(card);
+            });
+
+            // Chat-Buttons neu binden
+            grid.querySelectorAll('.contractor-chat-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var chatModal = document.getElementById('chatModal');
+                    if (chatModal) {
+                        var bName = this.getAttribute('data-chat-business');
+                        var bCity = this.getAttribute('data-chat-city');
+                        var bTrade = this.getAttribute('data-chat-trade');
+                        var titleEl = chatModal.querySelector('.chat-business-name, .chat-header h3');
+                        if (titleEl) titleEl.textContent = bName;
+                        chatModal.classList.remove('is-hidden');
+                        chatModal.style.display = 'flex';
+                    }
+                });
+            });
+
+            // Globale contractorCards updaten für script.js Filter
+            if (typeof contractorCards !== 'undefined') {
+                contractorCards = Array.from(grid.querySelectorAll('.contractor-card'));
+            }
+        }
+
+        /* ── Geocoding & Autocomplete ── */
+        var suggestionsEl = document.getElementById('mapAddressSuggestions');
+        var addressInput = document.getElementById('mapAddressInput');
+        var debounceTimer;
+
+        if (addressInput) {
+            addressInput.addEventListener('input', function() {
+                clearTimeout(debounceTimer);
+                var q = this.value.trim();
+                if (q.length < 3) { suggestionsEl.classList.add('is-hidden'); return; }
+                debounceTimer = setTimeout(function() {
+                    fetch('https://nominatim.openstreetmap.org/search?format=json&countrycodes=de&limit=5&q=' + encodeURIComponent(q))
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            if (!data.length) { suggestionsEl.classList.add('is-hidden'); return; }
+                            suggestionsEl.innerHTML = '';
+                            data.forEach(function(item) {
+                                var btn = document.createElement('button');
+                                btn.type = 'button';
+                                btn.className = 'map-suggestion-item';
+                                btn.innerHTML = '<i class="fas fa-location-dot"></i> ' + item.display_name;
+                                btn.addEventListener('click', function() {
+                                    userLat = parseFloat(item.lat);
+                                    userLng = parseFloat(item.lon);
+                                    addressInput.value = item.display_name.split(',').slice(0, 3).join(',');
+                                    suggestionsEl.classList.add('is-hidden');
+                                    updateUserPosition();
+                                });
+                                suggestionsEl.appendChild(btn);
+                            });
+                            suggestionsEl.classList.remove('is-hidden');
+                        }).catch(function() { suggestionsEl.classList.add('is-hidden'); });
+                }, 350);
+            });
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.map-controls')) suggestionsEl.classList.add('is-hidden');
+            });
+            addressInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') { e.preventDefault(); document.getElementById('mapSearchBtn').click(); }
+            });
+        }
+
+        function updateUserPosition() {
+            if (!map) return;
+            // User-Marker erstellen oder updaten
+            if (userMarker) {
+                userMarker.setLatLng([userLat, userLng]);
+            } else {
+                userMarker = L.marker([userLat, userLng], { icon: userIcon() }).addTo(map);
+                userMarker.bindPopup('<strong>Dein Standort</strong>');
+            }
+            updateMarkers();
+            map.setView([userLat, userLng], 12);
+        }
+
+        // Standort-Button
+        var locateBtn = document.getElementById('mapLocateBtn');
+        if (locateBtn) {
+            locateBtn.addEventListener('click', function() {
+                if (!navigator.geolocation) return;
+                locateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                navigator.geolocation.getCurrentPosition(function(pos) {
+                    userLat = pos.coords.latitude;
+                    userLng = pos.coords.longitude;
+                    addressInput.value = '';
+                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + userLat + '&lon=' + userLng)
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) { if (data.display_name) addressInput.value = data.display_name.split(',').slice(0,3).join(','); })
+                        .catch(function() {});
+                    updateUserPosition();
+                    locateBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+                }, function() {
+                    locateBtn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+                    alert('Standort konnte nicht ermittelt werden.');
+                });
+            });
+        }
+
+        document.getElementById('mapRadiusSelect').addEventListener('change', updateMarkers);
+        document.getElementById('mapTradeSelect').addEventListener('change', updateMarkers);
+
+        var searchBtn = document.getElementById('mapSearchBtn');
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function() {
+                var q = addressInput.value.trim();
+                if (!q) return;
+                fetch('https://nominatim.openstreetmap.org/search?format=json&countrycodes=de&limit=1&q=' + encodeURIComponent(q))
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.length) {
+                            userLat = parseFloat(data[0].lat);
+                            userLng = parseFloat(data[0].lon);
+                            addressInput.value = data[0].display_name.split(',').slice(0,3).join(',');
+                            updateUserPosition();
+                        }
+                    });
+            });
+        }
+
+    })();
+    </script>
+    <script>
+    /* ── Dark Mode Toggle ── */
+    (function() {
+        const toggle = document.getElementById('themeToggle');
+        const icon = document.getElementById('themeIcon');
+        const html = document.documentElement;
+
+        var saved = localStorage.getItem('nailit-theme');
+        if (saved === 'dark') {
+            html.setAttribute('data-theme', 'dark');
+            if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+        }
+
+        if (toggle) {
+            toggle.addEventListener('click', function() {
+                var isDark = html.getAttribute('data-theme') === 'dark';
+                if (isDark) {
+                    html.removeAttribute('data-theme');
+                    if (icon) icon.classList.replace('fa-sun', 'fa-moon');
+                    localStorage.setItem('nailit-theme', 'light');
+                } else {
+                    html.setAttribute('data-theme', 'dark');
+                    if (icon) icon.classList.replace('fa-moon', 'fa-sun');
+                    localStorage.setItem('nailit-theme', 'dark');
+                }
+            });
+        }
+    })();
+    </script>
 </body>
 </html>

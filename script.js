@@ -2199,7 +2199,7 @@ contractorResetButton?.addEventListener('click', () => {
 });
 
 updateContractorSearch();
-if (!contractorCards.length && isContractorsPage) {
+if (!contractorCards.length && isContractorsPage && !document.getElementById('locationOverlay')) {
     renderContractorDirectory();
 }
 applyContractorFiltersFromUrl();
